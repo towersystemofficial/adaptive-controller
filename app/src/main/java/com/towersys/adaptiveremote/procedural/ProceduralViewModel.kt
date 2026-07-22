@@ -5,7 +5,7 @@ import android.content.Intent
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.towersys.adaptiveremote.device.control.KnightControlService
-import com.towersys.adaptiveremote.device.control.KnightControlState
+import com.towersys.adaptiveremote.device.control.DeviceControlState
 import com.towersys.adaptiveremote.device.control.ProceduralMonitorState
 import com.towersys.adaptiveremote.text.SecretStore
 import com.towersys.adaptiveremote.video.VideoAnalysisService
@@ -16,7 +16,7 @@ import kotlinx.coroutines.launch
 
 class ProceduralViewModel(application: Application) : AndroidViewModel(application) {
     private val app = application.applicationContext
-    val connection = KnightControlState.connection
+    val connection = DeviceControlState.connection
     val status = ProceduralMonitorState.status
     private val _hasApiKey = MutableStateFlow(SecretStore(app).loadApiKey().isNotBlank())
     val hasApiKey = _hasApiKey.asStateFlow()
