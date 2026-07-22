@@ -5,7 +5,7 @@ import android.content.Intent
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.towersys.adaptiveremote.device.control.KnightControlService
-import com.towersys.adaptiveremote.device.control.KnightControlState
+import com.towersys.adaptiveremote.device.control.DeviceControlState
 import com.towersys.adaptiveremote.device.control.TextMonitorState
 import com.towersys.adaptiveremote.core.AiIntensitySettings
 import com.towersys.adaptiveremote.patterns.KnightPattern
@@ -32,8 +32,8 @@ class TextModeViewModel(application: Application) : AndroidViewModel(application
     val capturedText = VisibleTextState.latestText
     val sourceApp = VisibleTextState.sourceApp
     val accessibilityConnected = VisibleTextState.isServiceConnected
-    val connection = KnightControlState.connection
-    val playback = KnightControlState.patternPlayback
+    val connection = DeviceControlState.connection
+    val playback = DeviceControlState.patternPlayback
     val monitorStatus = TextMonitorState.status
     private val _analysis = MutableStateFlow<TextAnalysisState>(TextAnalysisState.Idle)
     val analysis = _analysis.asStateFlow()
