@@ -57,7 +57,7 @@ fun ProceduralModeScreen(viewModel: ProceduralViewModel = viewModel()) {
                     Text(status.summary(), color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text("Home AI multiplier: %.2f×".format(multiplier))
                     if (!hasApiKey) Text("Save your xAI key in Text mode first.")
-                    if (connection !is KnightConnectionStatus.Ready) Text("Scan and connect the Knight first.")
+                    if (connection !is KnightConnectionStatus.Ready) Text("Scan and connect a compatible device first.")
                 }
             }
         }

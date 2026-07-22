@@ -87,7 +87,7 @@ class KnightControlService : Service() {
                 val name = intent.getStringExtra(EXTRA_NAME) ?: "J-Mars"
                 val address = intent.getStringExtra(EXTRA_ADDRESS)
                 if (address == null) {
-                    fail("Missing Knight Bluetooth address.")
+                    fail("Missing device Bluetooth address.")
                 } else {
                     userRequestedDisconnect = false
                     startForeground(NOTIFICATION_ID, buildNotification("Connecting to $name…"))
@@ -139,7 +139,7 @@ class KnightControlService : Service() {
         runCatching {
             gatt = adapter.getRemoteDevice(device.address)
                 .connectGatt(this, false, callback, android.bluetooth.BluetoothDevice.TRANSPORT_LE)
-        }.onFailure { scheduleReconnect(it.message ?: "Could not connect to the Knight.") }
+        }.onFailure { scheduleReconnect(it.message ?: "Could not connect to the device.") }
     }
 
     private val callback = object : BluetoothGattCallback() {
@@ -148,12 +148,12 @@ class KnightControlService : Service() {
             if (status != BluetoothGatt.GATT_SUCCESS) {
                 runCatching { connection.close() }
                 if (gatt === connection) gatt = null
-                scheduleReconnect("Knight connection interrupted (status $status).")
+                scheduleReconnect("Device connection interrupted (status $status).")
                 return
             }
             when (newState) {
                 BluetoothProfile.STATE_CONNECTED -> if (!connection.discoverServices()) {
-                    fail("Could not discover Knight controls.")
+                    fail("Could not discover supported device controls.")
                 }
                 BluetoothProfile.STATE_DISCONNECTED -> {
                     KnightControlState.outputLevel.value = 0
@@ -165,7 +165,7 @@ class KnightControlService : Service() {
                     if (userRequestedDisconnect) {
                         KnightControlState.connection.value = KnightConnectionStatus.Disconnected
                     } else {
-                        scheduleReconnect("Knight disconnected; reconnecting…")
+                        scheduleReconnect("Device disconnected; reconnecting…")
                     }
                 }
             }
@@ -173,7 +173,7 @@ class KnightControlService : Service() {
 
         override fun onServicesDiscovered(connection: BluetoothGatt, status: Int) {
             if (status != BluetoothGatt.GATT_SUCCESS) {
-                scheduleReconnect("Knight control discovery failed; reconnecting…")
+                scheduleReconnect("Device control discovery failed; reconnecting…")
                 return
             }
             writeCharacteristic = connection
@@ -181,7 +181,7 @@ class KnightControlService : Service() {
                 ?.getCharacteristic(protocol.writeCharacteristicUuid)
             val device = currentDevice
             if (writeCharacteristic == null || device == null) {
-                scheduleReconnect("Knight control channel unavailable; reconnecting…")
+                scheduleReconnect("Device control channel unavailable; reconnecting…")
                 return
             }
             KnightControlState.connection.value = KnightConnectionStatus.Ready(device)
@@ -216,7 +216,7 @@ class KnightControlService : Service() {
         if (accepted) {
             KnightControlState.outputLevel.value = level
             val percent = (level * 100f / 255f).toInt()
-            updateNotification("Connected to ${currentDevice?.name ?: "Knight"} • output $percent%")
+            updateNotification("Connected to ${currentDevice?.name ?: "device"} • output $percent%")
         } else {
             KnightControlState.connection.value = KnightConnectionStatus.Error(
                 "Android rejected the control command. Press Stop, then reconnect.",
@@ -407,7 +407,7 @@ class KnightControlService : Service() {
 
     private fun startTextMonitor() {
         if (KnightControlState.connection.value !is KnightConnectionStatus.Ready) {
-            TextMonitorState.status.value = TextMonitorStatus.Error("Knight is reconnecting. Try again in a moment.")
+            TextMonitorState.status.value = TextMonitorStatus.Error("A compatible device is not connected.")
             return
         }
         val apiKey = SecretStore(this).loadApiKey()
@@ -512,12 +512,12 @@ class KnightControlService : Service() {
         textMonitorOverlay = null
         TextMonitorState.status.value = TextMonitorStatus.Idle
         stopOutput()
-        updateNotification("Connected to ${currentDevice?.name ?: "Knight"} • output 0%")
+        updateNotification("Connected to ${currentDevice?.name ?: "device"} • output 0%")
     }
 
     private fun startProcedural() {
         if (KnightControlState.connection.value !is KnightConnectionStatus.Ready) {
-            ProceduralMonitorState.status.value = ProceduralMonitorStatus.Error("Knight is reconnecting.")
+            ProceduralMonitorState.status.value = ProceduralMonitorStatus.Error("A compatible device is not connected.")
             return
         }
         val apiKey = SecretStore(this).loadApiKey()
@@ -913,7 +913,7 @@ class KnightControlService : Service() {
         getSystemService(NotificationManager::class.java).createNotificationChannel(
             NotificationChannel(
                 CHANNEL_ID,
-                "Knight connection",
+                "Device connection",
                 NotificationManager.IMPORTANCE_LOW,
             ).apply {
                 description = "Keeps manual control connected and provides an emergency stop."

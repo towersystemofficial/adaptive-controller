@@ -192,7 +192,7 @@ fun TextModeScreen(viewModel: TextModeViewModel = viewModel()) {
                             }
                         }
                         if (connection !is KnightConnectionStatus.Ready) {
-                            Text("Scan and connect the Knight from the home screen before playing.", style = MaterialTheme.typography.bodySmall)
+                            Text("Scan and connect a compatible device from the home screen before playing.", style = MaterialTheme.typography.bodySmall)
                         }
                     }
                 }

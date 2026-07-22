@@ -214,9 +214,9 @@ private data class ModeCardModel(
 )
 
 private val modeCards = listOf(
-    ModeCardModel(ControlMode.MANUAL, "Direct controls for every confirmed function.", Icons.Rounded.ShowChart),
-    ModeCardModel(ControlMode.PATTERNS, "Saved patterns and timeline editing.", Icons.Rounded.ShowChart),
-    ModeCardModel(ControlMode.TEXT, "Interpret visible passages and described events.", Icons.Rounded.Description),
-    ModeCardModel(ControlMode.VIDEO, "Local motion plus five-frame Grok analysis.", Icons.Rounded.Movie),
-    ModeCardModel(ControlMode.AUTONOMOUS, "Procedurally generated sessions.", Icons.Rounded.AutoAwesome),
+    ModeCardModel(ControlMode.MANUAL, "Set the connected device's output directly.", Icons.Rounded.ShowChart),
+    ModeCardModel(ControlMode.PATTERNS, "Create, save, edit, and play output timelines.", Icons.Rounded.ShowChart),
+    ModeCardModel(ControlMode.TEXT, "Turn reviewed on-screen text into an output timeline with Grok.", Icons.Rounded.Description),
+    ModeCardModel(ControlMode.VIDEO, "Analyze sampled screen frames with Grok and respond to visible motion.", Icons.Rounded.Movie),
+    ModeCardModel(ControlMode.AUTONOMOUS, "Generate and play output continuously with Grok.", Icons.Rounded.AutoAwesome),
 )
