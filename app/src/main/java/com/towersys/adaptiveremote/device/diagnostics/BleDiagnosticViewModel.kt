@@ -74,7 +74,7 @@ class BleDiagnosticViewModel(application: Application) : AndroidViewModel(applic
         _status.value = BleDiagnosticStatus.TestingCommand(report)
         viewModelScope.launch {
             if (KnightControlState.connection.value !is KnightConnectionStatus.Ready) {
-                _status.value = BleDiagnosticStatus.Error("Wait for the persistent Knight connection, then retry.")
+                _status.value = BleDiagnosticStatus.Error("Wait for the persistent device connection, then retry.")
                 return@launch
             }
             app.startService(
