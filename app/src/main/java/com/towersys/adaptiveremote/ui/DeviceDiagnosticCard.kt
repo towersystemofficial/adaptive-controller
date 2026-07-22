@@ -58,7 +58,7 @@ fun DeviceDiagnosticCard(viewModel: BleDiagnosticViewModel = viewModel()) {
             ) {
                 Icon(Icons.Rounded.Bluetooth, contentDescription = null)
                 Column(modifier = Modifier.weight(1f)) {
-                    Text("Knight setup", style = MaterialTheme.typography.titleMedium)
+                    Text("Device setup", style = MaterialTheme.typography.titleMedium)
                     Text(
                         status.summary(),
                         style = MaterialTheme.typography.bodyMedium,
@@ -98,7 +98,7 @@ fun DeviceDiagnosticCard(viewModel: BleDiagnosticViewModel = viewModel()) {
                 else MaterialTheme.colorScheme.primary,
             )
             Text(
-                "The persistent connection starts only after this scan confirms the Knight.",
+                "The persistent connection starts only after this scan confirms a supported control channel.",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -136,7 +136,7 @@ private fun CandidateList(
 ) {
     val visible = devices.filter { it.isLikelyKnight }.ifEmpty { devices.take(6) }
     if (visible.isEmpty()) {
-        Text("No BLE devices found. Power on the Knight and scan again.")
+        Text("No BLE devices found. Power on your device and scan again.")
         return
     }
     visible.forEach { device ->
@@ -167,8 +167,8 @@ private fun ReportContent(
     onDisconnect: () -> Unit,
 ) {
     Text(
-        if (report.hasExpectedJoyHubTransport) "Knight found and saved."
-        else "Knight control channel was not found.",
+        if (report.hasExpectedJoyHubTransport) "Compatible device found and saved."
+        else "A supported control channel was not found.",
         color = if (report.hasExpectedJoyHubTransport) {
             MaterialTheme.colorScheme.primary
         } else {
@@ -200,11 +200,11 @@ private fun KnightConnectionStatus.setupSummary(): String = when (this) {
 }
 
 private fun BleDiagnosticStatus.summary(): String = when (this) {
-    BleDiagnosticStatus.Idle -> "Ready to find the Knight"
+    BleDiagnosticStatus.Idle -> "Ready to find a device"
     BleDiagnosticStatus.Scanning -> "Scanning for nearby BLE devices…"
     is BleDiagnosticStatus.DevicesFound -> "${devices.size} nearby device(s) found"
     is BleDiagnosticStatus.Inspecting -> "Inspecting ${device.name}…"
-    is BleDiagnosticStatus.Complete -> "Knight saved"
+    is BleDiagnosticStatus.Complete -> "Device saved"
     is BleDiagnosticStatus.TestingCommand -> "Running brief low-output test…"
     is BleDiagnosticStatus.CommandAccepted -> "Start and stop commands accepted"
     is BleDiagnosticStatus.Error -> "Diagnostic needs attention"
