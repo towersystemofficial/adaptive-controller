@@ -1,68 +1,65 @@
 # Adaptive Remote
 
-Private Android controller for the Cafatop Knight (`J-Mars`).
+Adaptive Remote is an experimental Android controller for compatible JoyHub Bluetooth Low Energy devices. It supports direct output, reusable patterns, and optional AI-assisted Text, Video, and Procedural modes.
 
-The project is intentionally being built in hardware-gated milestones. The
-current checkpoint adds the pattern workspace after successful physical
-validation of manual J-Mars control.
+> [!WARNING]
+> This project is an early public development preview, not a certified medical or safety device. Only the Cafatop Knight advertised as `J-Mars`, using the JoyHub `FFA0`/`FFA1` transport, has been physically validated. Keep a non-software way to stop or remove connected hardware available.
 
-## Current state
+> [!IMPORTANT]
+> **Source-visible, not open source.** Copyright © 2026 Tower System. All rights reserved. Public access is provided only so development can be followed and evaluated. No permission is granted to copy, modify, redistribute, publish, sell, sublicense, or create derivative works from this code.
 
-- Native Kotlin and Jetpack Compose project
-- Package id: `com.towersys.adaptiveremote`
-- Minimum Android version: Android 12 (API 31)
-- Target/compile SDK: Android 16 (API 36)
-- Private-data backup disabled
-- Adaptive multiplier model implemented with a `0.5×` default
-- Navigable mode cards with Manual controls housed in Manual mode
-- Unit tests cover scaling and clamping semantics
-- Read-only BLE scan and GATT service inspection for `J-Mars`
-- Copyable diagnostic report that checks for JoyHub `FFA0`/`FFA1`
-- Persistent foreground connection with notification Stop action
-- Live full-range manual slider and level presets
-- Explicit stop-before-disconnect behavior
-- Pattern playback through the validated foreground BLE service
-- Built-in wave, pulse, and staircase patterns
-- Custom timeline editor with intensity and duration per step
-- Saved patterns, favorites, recent history, repeats, and procedural generation
-- Repeat-until-Stop playback without disconnecting the Knight
-- Text-mode visible-passage capture through an opt-in Accessibility service
-- Locally encrypted xAI key and explicit Grok 4.5 whole-passage analysis
-- AI-generated text timelines with the default 0.50× adaptive scale
-- Text timelines sized from passage length and AI-interpreted narrative pacing
-- Continuous visible-text monitoring with a movable floating Stop control
-- Live replacement timelines that crossfade from the current output and hold until new text arrives
-- Text bubble with current excerpt, step progress, and a caught-up scroll cue
-- Per-step motion gating: non-action, teasing/denial, pauses, and aftercare are forced to zero
-- Video mode with Android screen-share consent and foreground capture
-- Five ordered frames sampled evenly over one second per video cluster
-- Conflated video analysis that drops stale queued clusters instead of accumulating lag
-- Video motion gating, crossfaded live replacement, floating status, and Stop controls
-- Latest-wins AI timelines with smooth per-step transitions and faster video sampling
-- On-device video motion scoring with an explicit-action baseline and motion-sensitive amplification
-- Video-specific visual explicit-content gating with visible gate and motion status in the bubble
-- Persistent home-page AI multiplier shared by Text, Video, and Procedural modes
-- Bounded current-plus-pending Grok batch pipeline with blending and three-loop fallback
-- Grok-driven Procedural mode with Tease, Standard, Denial, Edge, Finish, and Close behavior
-- Automatic BLE reconnect after unexpected Knight connection loss
-- Scan-gated persistent connection; Stop preserves it and unexpected BLE loss triggers reconnect
+## Public alpha scope
 
-## Build prerequisites
+- Android 12 or newer (API 31+)
+- Read-only BLE discovery before a device is saved
+- Persistent connection with Stop-before-disconnect behavior
+- Direct manual control, presets, patterns, repeats, and a timeline editor
+- Optional AI modes using a user-supplied xAI API key
+- On-device encryption for the API key through Android Keystore
+- Local settings and pattern storage with Android cloud backup disabled
+- Explicit Android consent for Accessibility, overlays, and screen capture
+
+The app currently targets a narrow, validated protocol. It does not claim support for every JoyHub device.
+
+## Data and network behavior
+
+Manual control, BLE diagnostics, patterns, settings, and on-device motion scoring remain local. AI features connect directly to `https://api.x.ai` using the API key entered by the user:
+
+| Mode | Data sent to xAI |
+| --- | --- |
+| Text | Captured visible passage and recent generated-batch summaries |
+| Video | Five compressed screen frames per analyzed cluster and recent summaries |
+| Procedural | Style choices, session state, and recent generated-batch summaries |
+
+Requests set `store: false`, but xAI's own terms and retention rules still apply. See [PRIVACY.md](PRIVACY.md) before enabling AI or capture features. API usage may incur charges on the user's xAI account.
+
+## Build locally
+
+Requirements:
 
 - Android Studio with Android SDK 36
 - JDK 17
-- Internet access for the first Gradle dependency download
+- Internet access for the initial dependency download
 
-Open this directory in Android Studio and allow it to perform the initial Gradle
-sync. The GitHub Actions workflow installs Gradle 8.13 and Android SDK 36,
-runs unit tests, builds the debug APK, and uploads it as a private workflow
-artifact. A Gradle wrapper will be generated and committed once a Gradle runtime
-is available; the current coding environment does not contain Gradle or an
-Android SDK.
+Clone the repository, open its root in Android Studio, allow Gradle sync to complete, and run the `app` configuration on an Android 12+ device. A Gradle wrapper is not committed yet, so command-line and CI builds remain incomplete until one is generated with Gradle 8.13.
 
-## Safety boundary
+## Safety model
 
-The physical unit has been confirmed as `J-Mars`, its `FFA0`/`FFA1` transport
-was discovered read-only, and a brief low-output start/stop command was
-successfully tested. All output still passes through the validated JoyHub frame
-encoder, and disconnect paths attempt Stop before closing GATT.
+- The app begins with a versioned safety and privacy notice.
+- Device discovery inspects GATT services before offering the controlled low-output probe.
+- Output values are clamped to the protocol range.
+- Stop clears all four continuous JoyHub channels.
+- Disconnect and service shutdown paths attempt Stop before closing GATT.
+- Text and Video AI output is gated when qualifying content is absent.
+
+These are risk reductions, not guarantees. Bluetooth disconnects, Android process termination, device firmware, or physical hardware failure can prevent a command from arriving.
+
+## Feedback and security
+
+The project is not accepting code contributions while ownership and product terms are being established. Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a pull request. Please report vulnerabilities privately using the instructions in [SECURITY.md](SECURITY.md), especially anything involving unintended output, capture disclosure, secret handling, or exported Android components.
+
+## Copyright and use
+
+Copyright © 2026 Tower System. All rights reserved.
+
+No open-source license is offered. Viewing this repository does not grant permission to use its contents beyond what applicable law independently permits. The repository may become private as product development advances; previously downloaded copies cannot be recalled.
