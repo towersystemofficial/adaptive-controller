@@ -407,7 +407,7 @@ class KnightControlService : Service() {
 
     private fun startTextMonitor() {
         if (KnightControlState.connection.value !is KnightConnectionStatus.Ready) {
-            TextMonitorState.status.value = TextMonitorStatus.Error("The device is reconnecting. Try again in a moment.")
+            TextMonitorState.status.value = TextMonitorStatus.Error("A compatible device is not connected.")
             return
         }
         val apiKey = SecretStore(this).loadApiKey()
@@ -517,7 +517,7 @@ class KnightControlService : Service() {
 
     private fun startProcedural() {
         if (KnightControlState.connection.value !is KnightConnectionStatus.Ready) {
-            ProceduralMonitorState.status.value = ProceduralMonitorStatus.Error("The device is reconnecting.")
+            ProceduralMonitorState.status.value = ProceduralMonitorStatus.Error("A compatible device is not connected.")
             return
         }
         val apiKey = SecretStore(this).loadApiKey()
