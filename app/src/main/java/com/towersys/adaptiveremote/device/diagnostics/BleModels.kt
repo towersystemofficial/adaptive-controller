@@ -1,5 +1,7 @@
 package com.towersys.adaptiveremote.device.diagnostics
 
+import com.towersys.adaptiveremote.device.protocol.JoyHubProtocolAdapter
+
 data class BleDeviceCandidate(val name: String, val address: String, val rssi: Int) {
     val isLikelyKnight: Boolean get() = name.equals("J-Mars", ignoreCase = true)
 }
@@ -42,8 +44,8 @@ data class KnightDiagnosticReport(
     }
 
     companion object {
-        const val JOYHUB_SERVICE_UUID = "0000ffa0-0000-1000-8000-00805f9b34fb"
-        const val JOYHUB_WRITE_UUID = "0000ffa1-0000-1000-8000-00805f9b34fb"
+        const val JOYHUB_SERVICE_UUID = JoyHubProtocolAdapter.SERVICE_UUID
+        const val JOYHUB_WRITE_UUID = JoyHubProtocolAdapter.WRITE_CHARACTERISTIC_UUID
     }
 }
 
