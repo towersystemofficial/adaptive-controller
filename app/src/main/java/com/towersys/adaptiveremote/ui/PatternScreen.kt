@@ -152,7 +152,7 @@ private fun PlaybackCard(
         ) {
             Column(Modifier.weight(1f)) {
                 val playing = playback as? PatternPlaybackState.Playing
-                Text(playing?.name ?: if (connected) "Ready" else "Knight disconnected", style = MaterialTheme.typography.titleMedium)
+                Text(playing?.name ?: if (connected) "Ready" else "Device disconnected", style = MaterialTheme.typography.titleMedium)
                 Text(
                     playing?.let { "Step ${it.step} of ${it.totalSteps}" }
                         ?: if (connected) "Choose a pattern below" else "Scan and connect from the home screen",
