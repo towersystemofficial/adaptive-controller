@@ -42,6 +42,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.towersys.adaptiveremote.core.AiIntensitySettings
 import com.towersys.adaptiveremote.core.ControlMode
+import com.towersys.adaptiveremote.core.PublicBuildConsentStore
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -50,6 +51,19 @@ fun AdaptiveRemoteApp() {
     AiIntensitySettings.initialize(context)
     val multiplier by AiIntensitySettings.multiplier.collectAsStateWithLifecycle()
     var activeMode by remember { androidx.compose.runtime.mutableStateOf<ControlMode?>(null) }
+    var hasAcceptedSafetyNotice by remember {
+        androidx.compose.runtime.mutableStateOf(PublicBuildConsentStore(context).hasAcceptedCurrentNotice())
+    }
+
+    if (!hasAcceptedSafetyNotice) {
+        PublicBuildWelcomeScreen(
+            onAccept = {
+                PublicBuildConsentStore(context).acceptCurrentNotice()
+                hasAcceptedSafetyNotice = true
+            },
+        )
+        return
+    }
 
     Scaffold(
         topBar = {
@@ -58,7 +72,7 @@ fun AdaptiveRemoteApp() {
                     Column {
                         Text(activeMode?.displayName ?: "Adaptive Remote")
                         Text(
-                            text = "Private controller",
+                            text = "Development preview",
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
