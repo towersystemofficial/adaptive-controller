@@ -36,7 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.towersys.adaptiveremote.core.AiIntensitySettings
-import com.towersys.adaptiveremote.device.control.KnightConnectionStatus
+import com.towersys.adaptiveremote.device.control.DeviceConnectionStatus
 import com.towersys.adaptiveremote.device.control.TextMonitorStatus
 import com.towersys.adaptiveremote.text.TextAnalysisState
 import com.towersys.adaptiveremote.text.TextModeViewModel
@@ -145,7 +145,7 @@ fun TextModeScreen(viewModel: TextModeViewModel = viewModel()) {
                     if (monitorStatus == TextMonitorStatus.Idle || monitorStatus is TextMonitorStatus.Error) {
                         Button(
                             modifier = Modifier.fillMaxWidth(),
-                            enabled = hasApiKey && accessibilityConnected && connection is KnightConnectionStatus.Ready,
+                            enabled = hasApiKey && accessibilityConnected && connection is DeviceConnectionStatus.Ready,
                             onClick = {
                                 if (!Settings.canDrawOverlays(context)) {
                                     context.startActivity(
@@ -184,14 +184,14 @@ fun TextModeScreen(viewModel: TextModeViewModel = viewModel()) {
                             }
                             Button(
                                 modifier = Modifier.weight(1f),
-                                enabled = connection is KnightConnectionStatus.Ready,
+                                enabled = connection is DeviceConnectionStatus.Ready,
                                 onClick = { viewModel.play(result.interpretation.pattern) },
                             ) {
                                 Icon(Icons.Rounded.PlayArrow, contentDescription = null)
                                 Text(" Play")
                             }
                         }
-                        if (connection !is KnightConnectionStatus.Ready) {
+                        if (connection !is DeviceConnectionStatus.Ready) {
                             Text("Scan and connect a compatible device from the home screen before playing.", style = MaterialTheme.typography.bodySmall)
                         }
                     }
