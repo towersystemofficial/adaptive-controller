@@ -29,8 +29,8 @@ import kotlinx.coroutines.withContext
 import com.towersys.adaptiveremote.MainActivity
 import com.towersys.adaptiveremote.R
 import com.towersys.adaptiveremote.core.AiIntensitySettings
-import com.towersys.adaptiveremote.device.diagnostics.KnightDiagnosticReport
-import com.towersys.adaptiveremote.device.protocol.JoyHubCommand
+import com.towersys.adaptiveremote.device.protocol.DeviceCapability
+import com.towersys.adaptiveremote.device.protocol.JoyHubProtocolAdapter
 import com.towersys.adaptiveremote.patterns.PatternRepeatPolicy
 import com.towersys.adaptiveremote.patterns.PatternStep
 import com.towersys.adaptiveremote.procedural.GrokProceduralClient
@@ -41,7 +41,6 @@ import com.towersys.adaptiveremote.text.GrokTextClient
 import com.towersys.adaptiveremote.text.SecretStore
 import com.towersys.adaptiveremote.text.TextMonitorOverlay
 import com.towersys.adaptiveremote.text.VisibleTextState
-import java.util.UUID
 import kotlin.random.Random
 
 class KnightControlService : Service() {
@@ -72,6 +71,7 @@ class KnightControlService : Service() {
     private var gatt: BluetoothGatt? = null
     private var writeCharacteristic: BluetoothGattCharacteristic? = null
     private var currentDevice: KnownKnight? = null
+    private val protocol = JoyHubProtocolAdapter
 
     override fun onCreate() {
         super.onCreate()
@@ -177,8 +177,8 @@ class KnightControlService : Service() {
                 return
             }
             writeCharacteristic = connection
-                .getService(UUID.fromString(KnightDiagnosticReport.JOYHUB_SERVICE_UUID))
-                ?.getCharacteristic(UUID.fromString(KnightDiagnosticReport.JOYHUB_WRITE_UUID))
+                .getService(protocol.serviceUuid)
+                ?.getCharacteristic(protocol.writeCharacteristicUuid)
             val device = currentDevice
             if (writeCharacteristic == null || device == null) {
                 scheduleReconnect("Knight control channel unavailable; reconnecting…")
@@ -197,14 +197,14 @@ class KnightControlService : Service() {
         val accepted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             connection.writeCharacteristic(
                 characteristic,
-                JoyHubCommand.oscillate(level),
+                protocol.encodeScalar(DeviceCapability.OSCILLATION, level),
                 BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE,
             ) == BluetoothGatt.GATT_SUCCESS
         } else {
             @Suppress("DEPRECATION")
             characteristic.writeType = BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
             @Suppress("DEPRECATION")
-            characteristic.value = JoyHubCommand.oscillate(level)
+            characteristic.value = protocol.encodeScalar(DeviceCapability.OSCILLATION, level)
             @Suppress("DEPRECATION")
             connection.writeCharacteristic(characteristic)
         }
