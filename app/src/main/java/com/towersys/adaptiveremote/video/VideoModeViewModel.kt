@@ -4,7 +4,7 @@ import android.app.Application
 import android.content.Intent
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
-import com.towersys.adaptiveremote.device.control.KnightControlState
+import com.towersys.adaptiveremote.device.control.DeviceControlState
 import com.towersys.adaptiveremote.device.control.VideoMonitorState
 import com.towersys.adaptiveremote.text.SecretStore
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.asStateFlow
 
 class VideoModeViewModel(application: Application) : AndroidViewModel(application) {
     private val app = application.applicationContext
-    val connection = KnightControlState.connection
+    val connection = DeviceControlState.connection
     val status = VideoMonitorState.status
     private val _hasApiKey = MutableStateFlow(SecretStore(app).loadApiKey().isNotBlank())
     val hasApiKey = _hasApiKey.asStateFlow()
