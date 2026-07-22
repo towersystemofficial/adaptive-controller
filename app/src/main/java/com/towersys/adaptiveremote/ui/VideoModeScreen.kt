@@ -77,7 +77,7 @@ fun VideoModeScreen(viewModel: VideoModeViewModel = viewModel()) {
                     Text(
                         when {
                             !hasApiKey -> "Save your xAI key in Text mode first."
-                            connection !is KnightConnectionStatus.Ready -> "The device is reconnecting."
+                            connection !is KnightConnectionStatus.Ready -> "Connect a compatible device first."
                             else -> "The device and Grok are ready."
                         },
                         style = MaterialTheme.typography.bodySmall,
