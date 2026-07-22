@@ -72,7 +72,7 @@ fun ManualControlCard(viewModel: ManualControlViewModel = viewModel()) {
 
             if (!isReady) {
                 Text(
-                    "Use Knight setup on the home screen to scan and start the persistent connection.",
+                    "Use Device setup on the home screen to scan and start the persistent connection.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
