@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.towersys.adaptiveremote.core.AiIntensitySettings
-import com.towersys.adaptiveremote.device.control.KnightConnectionStatus
+import com.towersys.adaptiveremote.device.control.DeviceConnectionStatus
 import com.towersys.adaptiveremote.device.control.ProceduralMonitorStatus
 import com.towersys.adaptiveremote.procedural.ProceduralViewModel
 
@@ -57,7 +57,7 @@ fun ProceduralModeScreen(viewModel: ProceduralViewModel = viewModel()) {
                     Text(status.summary(), color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text("Home AI multiplier: %.2f×".format(multiplier))
                     if (!hasApiKey) Text("Save your xAI key in Text mode first.")
-                    if (connection !is KnightConnectionStatus.Ready) Text("Scan and connect a compatible device first.")
+                    if (connection !is DeviceConnectionStatus.Ready) Text("Scan and connect a compatible device first.")
                 }
             }
         }
@@ -65,7 +65,7 @@ fun ProceduralModeScreen(viewModel: ProceduralViewModel = viewModel()) {
             if (status == ProceduralMonitorStatus.Idle || status is ProceduralMonitorStatus.Error) {
                 Button(
                     modifier = Modifier.fillMaxWidth(),
-                    enabled = hasApiKey && connection is KnightConnectionStatus.Ready,
+                    enabled = hasApiKey && connection is DeviceConnectionStatus.Ready,
                     onClick = {
                         if (!Settings.canDrawOverlays(context)) {
                             context.startActivity(
