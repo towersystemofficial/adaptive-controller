@@ -194,17 +194,22 @@ class KnightControlService : Service() {
         val level = requestedLevel.coerceIn(0, 255)
         val connection = gatt ?: return
         val characteristic = writeCharacteristic ?: return
+        val command = if (level == 0) {
+            protocol.encodeStop()
+        } else {
+            protocol.encodeScalar(DeviceCapability.OSCILLATION, level)
+        }
         val accepted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             connection.writeCharacteristic(
                 characteristic,
-                protocol.encodeScalar(DeviceCapability.OSCILLATION, level),
+                command,
                 BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE,
             ) == BluetoothGatt.GATT_SUCCESS
         } else {
             @Suppress("DEPRECATION")
             characteristic.writeType = BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
             @Suppress("DEPRECATION")
-            characteristic.value = protocol.encodeScalar(DeviceCapability.OSCILLATION, level)
+            characteristic.value = command
             @Suppress("DEPRECATION")
             connection.writeCharacteristic(characteristic)
         }
