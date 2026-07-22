@@ -1,0 +1,21 @@
+# Android Studio and Gradle
+.gradle/
+.idea/
+*.iml
+build/
+**/build/
+local.properties
+
+# Signing material and generated packages
+*.jks
+*.keystore
+*.apk
+*.aab
+
+# Local secrets and platform files
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+Thumbs.db
