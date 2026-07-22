@@ -75,7 +75,7 @@ class VideoAnalysisService : Service() {
 
     private fun startCapture(intent: Intent) {
         if (KnightControlState.connection.value !is KnightConnectionStatus.Ready) {
-            VideoMonitorState.status.value = VideoMonitorStatus.Error("Connect the Knight before starting Video mode.")
+            VideoMonitorState.status.value = VideoMonitorStatus.Error("Connect a compatible device before starting Video mode.")
             stopSelf()
             return
         }
