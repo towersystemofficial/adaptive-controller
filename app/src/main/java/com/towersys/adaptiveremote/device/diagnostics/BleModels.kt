@@ -1,10 +1,11 @@
 package com.towersys.adaptiveremote.device.diagnostics
 
-import com.towersys.adaptiveremote.device.protocol.JoyHubProtocolAdapter
+import com.towersys.adaptiveremote.device.protocol.BleProtocolAdapter
+import com.towersys.adaptiveremote.device.protocol.DeviceProtocolRegistry
+import com.towersys.adaptiveremote.device.protocol.DiscoveredBleService
+import java.util.UUID
 
-data class BleDeviceCandidate(val name: String, val address: String, val rssi: Int) {
-    val isLikelyKnight: Boolean get() = name.equals("J-Mars", ignoreCase = true)
-}
+data class BleDeviceCandidate(val name: String, val address: String, val rssi: Int)
 
 data class BleCharacteristicReport(val uuid: String, val properties: Set<String>)
 
@@ -13,25 +14,39 @@ data class BleServiceReport(
     val characteristics: List<BleCharacteristicReport>,
 )
 
-data class KnightDiagnosticReport(
+data class DeviceDiagnosticReport(
     val deviceName: String,
     val deviceAddress: String,
     val services: List<BleServiceReport>,
 ) {
-    val hasExpectedJoyHubTransport: Boolean
-        get() = services.any { service ->
-            service.uuid.equals(JOYHUB_SERVICE_UUID, ignoreCase = true) &&
-                service.characteristics.any { characteristic ->
-                    characteristic.uuid.equals(JOYHUB_WRITE_UUID, ignoreCase = true) &&
+    val matchedAdapter: BleProtocolAdapter?
+        get() = DeviceProtocolRegistry.match(discoveredServices())
+
+    fun discoveredServices(): List<DiscoveredBleService> = services.mapNotNull { service ->
+        runCatching {
+            DiscoveredBleService(
+                uuid = UUID.fromString(service.uuid),
+                writableCharacteristicUuids = service.characteristics
+                    .filter { characteristic ->
                         characteristic.properties.any { it == "WRITE" || it == "WRITE_NO_RESPONSE" }
-                }
-        }
+                    }
+                    .map { UUID.fromString(it.uuid) }
+                    .toSet(),
+            )
+        }.getOrNull()
+    }
 
     fun asShareableText(): String = buildString {
+        val adapter = matchedAdapter
         appendLine("Adaptive Remote — read-only BLE diagnostic")
         appendLine("Device: $deviceName")
         appendLine("Address: $deviceAddress")
-        appendLine("Expected JoyHub FFA0/FFA1 transport: ${if (hasExpectedJoyHubTransport) "FOUND" else "NOT FOUND"}")
+        if (adapter == null) {
+            appendLine("Supported protocol match: NONE")
+        } else {
+            appendLine("Supported protocol match: ${adapter.displayName}")
+            appendLine("Capabilities: ${adapter.capabilities.map { it.name }.sorted().joinToString()}")
+        }
         appendLine()
         services.forEach { service ->
             appendLine("Service ${service.uuid}")
@@ -43,10 +58,6 @@ data class KnightDiagnosticReport(
         append("No characteristic values were written during this diagnostic.")
     }
 
-    companion object {
-        const val JOYHUB_SERVICE_UUID = JoyHubProtocolAdapter.SERVICE_UUID
-        const val JOYHUB_WRITE_UUID = JoyHubProtocolAdapter.WRITE_CHARACTERISTIC_UUID
-    }
 }
 
 sealed interface BleDiagnosticStatus {
@@ -54,8 +65,8 @@ sealed interface BleDiagnosticStatus {
     data object Scanning : BleDiagnosticStatus
     data class DevicesFound(val devices: List<BleDeviceCandidate>) : BleDiagnosticStatus
     data class Inspecting(val device: BleDeviceCandidate) : BleDiagnosticStatus
-    data class Complete(val report: KnightDiagnosticReport) : BleDiagnosticStatus
-    data class TestingCommand(val report: KnightDiagnosticReport) : BleDiagnosticStatus
-    data class CommandAccepted(val report: KnightDiagnosticReport) : BleDiagnosticStatus
+    data class Complete(val report: DeviceDiagnosticReport) : BleDiagnosticStatus
+    data class TestingCommand(val report: DeviceDiagnosticReport) : BleDiagnosticStatus
+    data class CommandAccepted(val report: DeviceDiagnosticReport) : BleDiagnosticStatus
     data class Error(val message: String) : BleDiagnosticStatus
 }
