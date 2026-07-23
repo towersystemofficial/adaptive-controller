@@ -134,7 +134,7 @@ private fun CandidateList(
     devices: List<BleDeviceCandidate>,
     onInspect: (BleDeviceCandidate) -> Unit,
 ) {
-    val visible = devices.filter { it.isLikelyKnight }.ifEmpty { devices.take(6) }
+    val visible = devices.take(6)
     if (visible.isEmpty()) {
         Text("No BLE devices found. Power on your device and scan again.")
         return
@@ -161,15 +161,15 @@ private fun CandidateList(
 @Suppress("DEPRECATION")
 @Composable
 private fun ReportContent(
-    report: com.towersys.adaptiveremote.device.diagnostics.KnightDiagnosticReport,
+    report: com.towersys.adaptiveremote.device.diagnostics.DeviceDiagnosticReport,
     commandAccepted: Boolean,
     onRunProbe: (() -> Unit)?,
     onDisconnect: () -> Unit,
 ) {
     Text(
-        if (report.hasExpectedJoyHubTransport) "Compatible device found and saved."
+        if (report.matchedAdapter != null) "Compatible device found and saved."
         else "A supported control channel was not found.",
-        color = if (report.hasExpectedJoyHubTransport) {
+        color = if (report.matchedAdapter != null) {
             MaterialTheme.colorScheme.primary
         } else {
             MaterialTheme.colorScheme.error
@@ -182,7 +182,7 @@ private fun ReportContent(
             color = MaterialTheme.colorScheme.primary,
             style = MaterialTheme.typography.bodyMedium,
         )
-    } else if (onRunProbe != null && report.hasExpectedJoyHubTransport) {
+    } else if (onRunProbe != null && report.matchedAdapter != null) {
         Text(
             "Controlled test: one ~6% oscillation command for 0.65 seconds, followed automatically by stop.",
             style = MaterialTheme.typography.bodyMedium,
