@@ -22,6 +22,9 @@ data class DeviceDiagnosticReport(
     val matchedAdapter: BleProtocolAdapter?
         get() = DeviceProtocolRegistry.match(discoveredServices())
 
+    val probeCapability
+        get() = matchedAdapter?.capabilities?.singleOrNull()
+
     fun discoveredServices(): List<DiscoveredBleService> = services.mapNotNull { service ->
         runCatching {
             DiscoveredBleService(
@@ -45,6 +48,7 @@ data class DeviceDiagnosticReport(
             appendLine("Supported protocol match: NONE")
         } else {
             appendLine("Supported protocol match: ${adapter.displayName}")
+            appendLine("Support status: ${adapter.supportStatus.name}")
             appendLine("Capabilities: ${adapter.capabilities.map { it.name }.sorted().joinToString()}")
         }
         appendLine()
