@@ -20,7 +20,7 @@ data class DeviceDiagnosticReport(
     val services: List<BleServiceReport>,
 ) {
     val matchedAdapter: BleProtocolAdapter?
-        get() = DeviceProtocolRegistry.match(discoveredServices())
+        get() = DeviceProtocolRegistry.match(discoveredServices(), deviceName)
 
     val probeCapability
         get() = matchedAdapter?.capabilities?.singleOrNull()
