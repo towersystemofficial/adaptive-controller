@@ -21,6 +21,36 @@ class DeviceProtocolRegistryTest {
     }
 
     @Test
+    fun matchesLovense5030FromDocumentedWritableTransport() {
+        val match = DeviceProtocolRegistry.match(
+            listOf(
+                DiscoveredBleService(
+                    uuid = Lovense5030ProtocolAdapter.serviceUuid,
+                    writableCharacteristicUuids = setOf(
+                        Lovense5030ProtocolAdapter.writeCharacteristicUuid,
+                    ),
+                ),
+            ),
+        )
+
+        assertEquals(Lovense5030ProtocolAdapter, match)
+    }
+
+    @Test
+    fun doesNotMatchLovense5030WhenWriteCharacteristicIsMissing() {
+        val match = DeviceProtocolRegistry.match(
+            listOf(
+                DiscoveredBleService(
+                    uuid = Lovense5030ProtocolAdapter.serviceUuid,
+                    writableCharacteristicUuids = emptySet(),
+                ),
+            ),
+        )
+
+        assertNull(match)
+    }
+
+    @Test
     fun doesNotMatchWhenWriteCharacteristicIsMissing() {
         val match = DeviceProtocolRegistry.match(
             listOf(
@@ -55,6 +85,10 @@ class DeviceProtocolRegistryTest {
         assertEquals(
             JoyHubProtocolAdapter,
             DeviceProtocolRegistry.findById(JoyHubProtocolAdapter.id),
+        )
+        assertEquals(
+            Lovense5030ProtocolAdapter,
+            DeviceProtocolRegistry.findById(Lovense5030ProtocolAdapter.id),
         )
         assertNull(DeviceProtocolRegistry.findById("unknown"))
     }
