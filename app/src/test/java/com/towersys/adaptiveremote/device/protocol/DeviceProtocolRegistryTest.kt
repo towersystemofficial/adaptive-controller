@@ -149,7 +149,48 @@ class DeviceProtocolRegistryTest {
             Lovense5030ProtocolAdapter,
             DeviceProtocolRegistry.findById(Lovense5030ProtocolAdapter.id),
         )
+        assertEquals(
+            VorzeBachProtocolAdapter,
+            DeviceProtocolRegistry.findById(VorzeBachProtocolAdapter.id),
+        )
+        assertEquals(
+            AdultFestaRocketProtocolAdapter,
+            DeviceProtocolRegistry.findById(AdultFestaRocketProtocolAdapter.id),
+        )
         assertNull(DeviceProtocolRegistry.findById("unknown"))
+    }
+
+    @Test
+    fun matchesVorzeVariantsOnlyWithExactNameAndTransport() {
+        val services = listOf(
+            DiscoveredBleService(
+                uuid = VorzeBachProtocolAdapter.serviceUuid,
+                writableCharacteristicUuids = setOf(VorzeBachProtocolAdapter.writeCharacteristicUuid),
+            ),
+        )
+
+        assertEquals(
+            VorzeBachProtocolAdapter,
+            DeviceProtocolRegistry.match(services, "Bach smart"),
+        )
+        assertEquals(
+            AdultFestaRocketProtocolAdapter,
+            DeviceProtocolRegistry.match(services, "ROCKET"),
+        )
+        assertNull(DeviceProtocolRegistry.match(services))
+        assertNull(DeviceProtocolRegistry.match(services, "CycSA"))
+    }
+
+    @Test
+    fun rejectsVorzeNameWhenWriteCharacteristicIsMissing() {
+        val services = listOf(
+            DiscoveredBleService(
+                uuid = VorzeBachProtocolAdapter.serviceUuid,
+                writableCharacteristicUuids = emptySet(),
+            ),
+        )
+
+        assertNull(DeviceProtocolRegistry.match(services, "Bach smart"))
     }
 
     @Test
