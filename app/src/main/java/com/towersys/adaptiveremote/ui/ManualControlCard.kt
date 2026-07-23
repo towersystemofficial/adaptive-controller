@@ -29,6 +29,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.towersys.adaptiveremote.device.control.DeviceConnectionStatus
 import com.towersys.adaptiveremote.device.control.ManualControlViewModel
+import com.towersys.adaptiveremote.device.protocol.DeviceCapability
 import kotlin.math.roundToInt
 
 @Composable
@@ -36,7 +37,9 @@ fun ManualControlCard(viewModel: ManualControlViewModel = viewModel()) {
     val knownDevice by viewModel.knownDevice.collectAsStateWithLifecycle()
     val connection by viewModel.connection.collectAsStateWithLifecycle()
     val outputLevel by viewModel.outputLevel.collectAsStateWithLifecycle()
+    val capabilities by viewModel.capabilities.collectAsStateWithLifecycle()
     val isReady = connection is DeviceConnectionStatus.Ready
+    val capability = capabilities.singleOrNull()
     var selectedLevel by remember { mutableFloatStateOf(0f) }
 
     LaunchedEffect(outputLevel) {
@@ -80,21 +83,28 @@ fun ManualControlCard(viewModel: ManualControlViewModel = viewModel()) {
             }
 
             HorizontalDivider()
-            Row(
+            if (capability == null) {
+                Text(
+                    "This device does not expose a supported manual scalar control.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            } else {
+                Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
-                Text("Output", style = MaterialTheme.typography.titleMedium)
+                Text(capability.displayName(), style = MaterialTheme.typography.titleMedium)
                 Text("${(selectedLevel * 100).roundToInt()}%", style = MaterialTheme.typography.titleMedium)
             }
             Slider(
                 value = selectedLevel,
                 onValueChange = {
                     selectedLevel = it
-                    viewModel.previewLevel((it * 255).roundToInt())
+                    viewModel.previewLevel(capability, (it * 255).roundToInt())
                 },
                 onValueChangeFinished = {
-                    viewModel.setLevel((selectedLevel * 255).roundToInt())
+                    viewModel.setLevel(capability, (selectedLevel * 255).roundToInt())
                 },
                 enabled = isReady,
                 valueRange = 0f..1f,
@@ -108,7 +118,7 @@ fun ManualControlCard(viewModel: ManualControlViewModel = viewModel()) {
                         enabled = isReady,
                         onClick = {
                             selectedLevel = percent / 100f
-                            viewModel.setLevel((percent * 255f / 100f).roundToInt())
+                            viewModel.setLevel(capability, (percent * 255f / 100f).roundToInt())
                         },
                         contentPadding = androidx.compose.foundation.layout.PaddingValues(
                             horizontal = 10.dp,
@@ -116,6 +126,7 @@ fun ManualControlCard(viewModel: ManualControlViewModel = viewModel()) {
                         ),
                     ) { Text("$percent") }
                 }
+            }
             }
             FilledTonalButton(
                 modifier = Modifier.fillMaxWidth(),
@@ -135,6 +146,9 @@ fun ManualControlCard(viewModel: ManualControlViewModel = viewModel()) {
         }
     }
 }
+
+private fun DeviceCapability.displayName(): String =
+    name.lowercase().replaceFirstChar { it.uppercase() }
 
 private fun DeviceConnectionStatus.summary(knownName: String?): String = when (this) {
     DeviceConnectionStatus.Disconnected -> if (knownName == null) "No saved device" else "$knownName disconnected"
