@@ -31,6 +31,7 @@ import com.towersys.adaptiveremote.device.diagnostics.BleDeviceCandidate
 import com.towersys.adaptiveremote.device.diagnostics.BleDiagnosticStatus
 import com.towersys.adaptiveremote.device.diagnostics.BleDiagnosticViewModel
 import com.towersys.adaptiveremote.device.control.DeviceConnectionStatus
+import com.towersys.adaptiveremote.device.protocol.AdapterSupportStatus
 
 @Composable
 fun DeviceDiagnosticCard(viewModel: BleDiagnosticViewModel = viewModel()) {
@@ -108,7 +109,9 @@ fun DeviceDiagnosticCard(viewModel: BleDiagnosticViewModel = viewModel()) {
                 is BleDiagnosticStatus.Complete -> ReportContent(
                     report = current.report,
                     commandAccepted = false,
-                    onRunProbe = if (connection is DeviceConnectionStatus.Ready) {
+                    onRunProbe = if (
+                        connection is DeviceConnectionStatus.Ready && current.report.probeCapability != null
+                    ) {
                         { viewModel.runLowOutputProbe(current.report) }
                     } else null,
                     onDisconnect = viewModel::disconnectAndReset,
@@ -167,8 +170,11 @@ private fun ReportContent(
     onDisconnect: () -> Unit,
 ) {
     Text(
-        if (report.matchedAdapter != null) "Compatible device found and saved."
-        else "A supported control channel was not found.",
+        when (report.matchedAdapter?.supportStatus) {
+            AdapterSupportStatus.VERIFIED -> "Verified protocol match found and saved."
+            AdapterSupportStatus.EXPERIMENTAL -> "Experimental protocol match found and saved."
+            null -> "A supported control channel was not found."
+        },
         color = if (report.matchedAdapter != null) {
             MaterialTheme.colorScheme.primary
         } else {
@@ -176,6 +182,13 @@ private fun ReportContent(
         },
         style = MaterialTheme.typography.titleSmall,
     )
+    if (report.matchedAdapter?.supportStatus == AdapterSupportStatus.EXPERIMENTAL) {
+        Text(
+            "This protocol has not completed physical verification. Use the controlled test only with compatible hardware available.",
+            color = MaterialTheme.colorScheme.error,
+            style = MaterialTheme.typography.bodyMedium,
+        )
+    }
     if (commandAccepted) {
         Text(
             "Android accepted the brief start and stop commands. Confirm what the hardware physically did.",
@@ -184,7 +197,7 @@ private fun ReportContent(
         )
     } else if (onRunProbe != null && report.matchedAdapter != null) {
         Text(
-            "Controlled test: one ~6% oscillation command for 0.65 seconds, followed automatically by stop.",
+            "Controlled test: one ~6% ${report.probeCapability?.name?.lowercase()} command for 0.65 seconds, followed automatically by stop.",
             style = MaterialTheme.typography.bodyMedium,
         )
         Button(onClick = onRunProbe) { Text("Run brief low-output test") }

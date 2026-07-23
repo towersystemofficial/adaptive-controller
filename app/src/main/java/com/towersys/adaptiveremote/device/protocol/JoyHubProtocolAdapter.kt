@@ -5,6 +5,7 @@ import java.util.UUID
 object JoyHubProtocolAdapter : BleProtocolAdapter {
     override val id = "joyhub-ffa0"
     override val displayName = "JoyHub FFA0/FFA1"
+    override val supportStatus = AdapterSupportStatus.VERIFIED
     override val serviceUuid: UUID = UUID.fromString(SERVICE_UUID)
     override val writeCharacteristicUuid: UUID = UUID.fromString(WRITE_CHARACTERISTIC_UUID)
     override val capabilities = setOf(DeviceCapability.OSCILLATION)

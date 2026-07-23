@@ -1,5 +1,6 @@
 package com.towersys.adaptiveremote.device.diagnostics
 
+import com.towersys.adaptiveremote.device.protocol.AdapterSupportStatus
 import com.towersys.adaptiveremote.device.protocol.DeviceCapability
 import com.towersys.adaptiveremote.device.protocol.JoyHubProtocolAdapter
 import org.junit.Assert.assertEquals
@@ -16,7 +17,10 @@ class DeviceDiagnosticReportTest {
             setOf("WRITE_NO_RESPONSE"),
         )
         assertEquals(JoyHubProtocolAdapter, report.matchedAdapter)
+        assertEquals(AdapterSupportStatus.VERIFIED, report.matchedAdapter?.supportStatus)
+        assertEquals(DeviceCapability.OSCILLATION, report.probeCapability)
         assertTrue(report.asShareableText().contains(JoyHubProtocolAdapter.displayName))
+        assertTrue(report.asShareableText().contains("Support status: VERIFIED"))
         assertTrue(report.asShareableText().contains(DeviceCapability.OSCILLATION.name))
         assertTrue(report.asShareableText().contains("No characteristic values were written"))
     }
@@ -29,6 +33,7 @@ class DeviceDiagnosticReportTest {
             setOf("READ"),
         )
         assertNull(report.matchedAdapter)
+        assertNull(report.probeCapability)
         assertTrue(report.asShareableText().contains("Supported protocol match: NONE"))
     }
 
