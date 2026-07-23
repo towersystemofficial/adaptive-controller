@@ -10,6 +10,9 @@ import com.towersys.adaptiveremote.device.control.KnownDeviceStore
 import com.towersys.adaptiveremote.device.control.DeviceControlState
 import com.towersys.adaptiveremote.device.control.KnightControlService
 import com.towersys.adaptiveremote.device.control.DeviceConnectionStatus
+import com.towersys.adaptiveremote.device.protocol.DeviceProtocolRegistry
+import com.towersys.adaptiveremote.device.protocol.DiscoveredBleService
+import java.util.UUID
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -55,8 +58,9 @@ class BleDiagnosticViewModel(application: Application) : AndroidViewModel(applic
             diagnostic.inspect(candidate)
                 .onSuccess {
                     val report = it
-                    if (report.hasExpectedJoyHubTransport) {
-                        val device = KnownDevice(report.deviceName, report.deviceAddress)
+                    val adapter = DeviceProtocolRegistry.match(report.discoveredServices())
+                    if (adapter != null) {
+                        val device = KnownDevice(report.deviceName, report.deviceAddress, adapter.id)
                         knownKnightStore.save(device)
                         DeviceControlState.knownDevice.value = device
                         delay(INSPECTION_DISCONNECT_SETTLE_MS)
@@ -117,6 +121,21 @@ class BleDiagnosticViewModel(application: Application) : AndroidViewModel(applic
         }
         DeviceControlState.connection.value = DeviceConnectionStatus.Disconnected
     }
+
+    private fun KnightDiagnosticReport.discoveredServices(): List<DiscoveredBleService> =
+        services.mapNotNull { service ->
+            runCatching {
+                DiscoveredBleService(
+                    uuid = UUID.fromString(service.uuid),
+                    writableCharacteristicUuids = service.characteristics
+                        .filter { characteristic ->
+                            characteristic.properties.any { it == "WRITE" || it == "WRITE_NO_RESPONSE" }
+                        }
+                        .map { UUID.fromString(it.uuid) }
+                        .toSet(),
+                )
+            }.getOrNull()
+        }
 
     companion object {
         private const val SCAN_DISCONNECT_SETTLE_MS = 500L
