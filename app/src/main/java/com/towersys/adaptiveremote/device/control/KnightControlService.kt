@@ -193,10 +193,10 @@ class KnightControlService : Service() {
                 return
             }
             val protocol = currentProtocol
-            writeCharacteristic = protocol?.let {
+            writeCharacteristic = protocol?.transports?.firstNotNullOfOrNull { transport ->
                 connection
-                .getService(protocol.serviceUuid)
-                ?.getCharacteristic(protocol.writeCharacteristicUuid)
+                    .getService(transport.serviceUuid)
+                    ?.getCharacteristic(transport.writeCharacteristicUuid)
             }
             val device = currentDevice
             if (writeCharacteristic == null || device == null) {
