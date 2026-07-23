@@ -11,6 +11,8 @@ object DeviceProtocolRegistry {
     private val adapters: List<BleProtocolAdapter> = listOf(
         JoyHubProtocolAdapter,
         Lovense5030ProtocolAdapter,
+        VorzeBachProtocolAdapter,
+        AdultFestaRocketProtocolAdapter,
     )
 
     fun findById(id: String): BleProtocolAdapter? = adapters.firstOrNull { it.id == id }
