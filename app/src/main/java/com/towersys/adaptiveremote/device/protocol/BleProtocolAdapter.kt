@@ -26,6 +26,10 @@ interface BleProtocolAdapter {
     val id: String
     val displayName: String
     val supportStatus: AdapterSupportStatus
+    val advertisedNames: Set<String>
+        get() = emptySet()
+    val advertisedNamePrefixes: Set<String>
+        get() = emptySet()
     val serviceUuid: UUID
     val writeCharacteristicUuid: UUID
     val additionalTransports: Set<BleProtocolTransport>
