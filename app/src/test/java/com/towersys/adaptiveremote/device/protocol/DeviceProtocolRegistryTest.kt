@@ -6,6 +6,35 @@ import org.junit.Assert.assertNull
 import org.junit.Test
 
 class DeviceProtocolRegistryTest {
+    private val documentedTransport = BleProtocolTransport(
+        serviceUuid = UUID.fromString("12345678-0000-1000-8000-00805f9b34fb"),
+        writeCharacteristicUuid = UUID.fromString("12345679-0000-1000-8000-00805f9b34fb"),
+    )
+
+    private fun nameRestrictedAdapter(
+        exactNames: Set<String> = emptySet(),
+        prefixes: Set<String> = emptySet(),
+    ) = object : BleProtocolAdapter {
+        override val id = "test"
+        override val displayName = "Test"
+        override val supportStatus = AdapterSupportStatus.EXPERIMENTAL
+        override val advertisedNames = exactNames
+        override val advertisedNamePrefixes = prefixes
+        override val serviceUuid = documentedTransport.serviceUuid
+        override val writeCharacteristicUuid = documentedTransport.writeCharacteristicUuid
+        override val capabilities = setOf(DeviceCapability.VIBRATION)
+
+        override fun encodeScalar(capability: DeviceCapability, value: Int) = byteArrayOf()
+        override fun encodeStop() = byteArrayOf()
+    }
+
+    private val documentedServices = listOf(
+        DiscoveredBleService(
+            uuid = documentedTransport.serviceUuid,
+            writableCharacteristicUuids = setOf(documentedTransport.writeCharacteristicUuid),
+        ),
+    )
+
     @Test
     fun matchesJoyHubFromDocumentedWritableTransport() {
         val match = DeviceProtocolRegistry.match(
@@ -121,5 +150,40 @@ class DeviceProtocolRegistryTest {
             DeviceProtocolRegistry.findById(Lovense5030ProtocolAdapter.id),
         )
         assertNull(DeviceProtocolRegistry.findById("unknown"))
+    }
+
+    @Test
+    fun matchesDocumentedExactAdvertisedName() {
+        val adapter = nameRestrictedAdapter(exactNames = setOf("Bach smart"))
+
+        assertEquals(true, adapter.matches("Bach smart", documentedServices))
+    }
+
+    @Test
+    fun matchesDocumentedAdvertisedNamePrefix() {
+        val adapter = nameRestrictedAdapter(prefixes = setOf("UFO-"))
+
+        assertEquals(true, adapter.matches("UFO-TW", documentedServices))
+    }
+
+    @Test
+    fun rejectsMissingAdvertisedNameWhenNameEvidenceIsRequired() {
+        val adapter = nameRestrictedAdapter(exactNames = setOf("Bach smart"))
+
+        assertEquals(false, adapter.matches(null, documentedServices))
+    }
+
+    @Test
+    fun rejectsIncorrectAdvertisedNameWhenNameEvidenceIsRequired() {
+        val adapter = nameRestrictedAdapter(exactNames = setOf("Bach smart"))
+
+        assertEquals(false, adapter.matches("CycSA", documentedServices))
+    }
+
+    @Test
+    fun preservesTransportOnlyMatchingWhenNoNameEvidenceIsRequired() {
+        val adapter = nameRestrictedAdapter()
+
+        assertEquals(true, adapter.matches(null, documentedServices))
     }
 }
