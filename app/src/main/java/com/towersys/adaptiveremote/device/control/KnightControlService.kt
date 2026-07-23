@@ -91,7 +91,7 @@ class KnightControlService : Service() {
                 } else {
                     userRequestedDisconnect = false
                     startForeground(NOTIFICATION_ID, buildNotification("Connecting to $name…"))
-                    connect(KnownDevice(name, address))
+                    connect(KnownDevice(name, address, protocol.id))
                 }
             }
             ACTION_SET_LEVEL -> {
