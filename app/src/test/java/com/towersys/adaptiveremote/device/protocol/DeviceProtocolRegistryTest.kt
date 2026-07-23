@@ -37,6 +37,36 @@ class DeviceProtocolRegistryTest {
     }
 
     @Test
+    fun matchesAlternateLovenseTransport() {
+        val alternate = Lovense5030ProtocolAdapter.additionalTransports.first()
+        val match = DeviceProtocolRegistry.match(
+            listOf(
+                DiscoveredBleService(
+                    uuid = alternate.serviceUuid,
+                    writableCharacteristicUuids = setOf(alternate.writeCharacteristicUuid),
+                ),
+            ),
+        )
+
+        assertEquals(Lovense5030ProtocolAdapter, match)
+    }
+
+    @Test
+    fun doesNotMatchAlternateLovenseTransportWhenWriteCharacteristicIsMissing() {
+        val alternate = Lovense5030ProtocolAdapter.additionalTransports.first()
+        val match = DeviceProtocolRegistry.match(
+            listOf(
+                DiscoveredBleService(
+                    uuid = alternate.serviceUuid,
+                    writableCharacteristicUuids = emptySet(),
+                ),
+            ),
+        )
+
+        assertNull(match)
+    }
+
+    @Test
     fun doesNotMatchLovense5030WhenWriteCharacteristicIsMissing() {
         val match = DeviceProtocolRegistry.match(
             listOf(

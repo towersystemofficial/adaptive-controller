@@ -17,9 +17,11 @@ object DeviceProtocolRegistry {
 
     fun match(services: Collection<DiscoveredBleService>): BleProtocolAdapter? =
         adapters.firstOrNull { adapter ->
-            services.any { service ->
-                service.uuid == adapter.serviceUuid &&
-                    adapter.writeCharacteristicUuid in service.writableCharacteristicUuids
+            adapter.transports.any { transport ->
+                services.any { service ->
+                    service.uuid == transport.serviceUuid &&
+                        transport.writeCharacteristicUuid in service.writableCharacteristicUuids
+                }
             }
         }
 }

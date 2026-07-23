@@ -18,6 +18,7 @@ class Lovense5030ProtocolAdapterTest {
             "50300002-0024-4bd4-bbd5-a6920e4c5653",
             Lovense5030ProtocolAdapter.writeCharacteristicUuid.toString(),
         )
+        assertEquals(9, Lovense5030ProtocolAdapter.transports.size)
         assertEquals(setOf(DeviceCapability.VIBRATION), Lovense5030ProtocolAdapter.capabilities)
     }
 
