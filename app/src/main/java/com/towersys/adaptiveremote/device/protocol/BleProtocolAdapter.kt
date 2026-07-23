@@ -17,12 +17,21 @@ enum class DeviceCapability {
     POSITION,
 }
 
+data class BleProtocolTransport(
+    val serviceUuid: UUID,
+    val writeCharacteristicUuid: UUID,
+)
+
 interface BleProtocolAdapter {
     val id: String
     val displayName: String
     val supportStatus: AdapterSupportStatus
     val serviceUuid: UUID
     val writeCharacteristicUuid: UUID
+    val additionalTransports: Set<BleProtocolTransport>
+        get() = emptySet()
+    val transports: Set<BleProtocolTransport>
+        get() = additionalTransports + BleProtocolTransport(serviceUuid, writeCharacteristicUuid)
     val capabilities: Set<DeviceCapability>
 
     fun encodeScalar(capability: DeviceCapability, value: Int): ByteArray
