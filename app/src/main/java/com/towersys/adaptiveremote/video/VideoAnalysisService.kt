@@ -22,9 +22,9 @@ import androidx.core.app.NotificationCompat
 import com.towersys.adaptiveremote.MainActivity
 import com.towersys.adaptiveremote.R
 import com.towersys.adaptiveremote.core.AiIntensitySettings
-import com.towersys.adaptiveremote.device.control.KnightConnectionStatus
+import com.towersys.adaptiveremote.device.control.DeviceConnectionStatus
 import com.towersys.adaptiveremote.device.control.KnightControlService
-import com.towersys.adaptiveremote.device.control.KnightControlState
+import com.towersys.adaptiveremote.device.control.DeviceControlState
 import com.towersys.adaptiveremote.device.control.VideoMonitorState
 import com.towersys.adaptiveremote.device.control.VideoMonitorStatus
 import com.towersys.adaptiveremote.text.SecretStore
@@ -74,7 +74,7 @@ class VideoAnalysisService : Service() {
     }
 
     private fun startCapture(intent: Intent) {
-        if (KnightControlState.connection.value !is KnightConnectionStatus.Ready) {
+        if (DeviceControlState.connection.value !is DeviceConnectionStatus.Ready) {
             VideoMonitorState.status.value = VideoMonitorStatus.Error("Connect a compatible device before starting Video mode.")
             stopSelf()
             return

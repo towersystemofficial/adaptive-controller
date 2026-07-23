@@ -10,14 +10,14 @@ import kotlinx.coroutines.launch
 
 class ManualControlViewModel(application: Application) : AndroidViewModel(application) {
     private val app = application.applicationContext
-    private val store = KnownKnightStore(app)
-    val knownDevice = KnightControlState.knownDevice
-    val connection = KnightControlState.connection
-    val outputLevel = KnightControlState.outputLevel
+    private val store = KnownDeviceStore(app)
+    val knownDevice = DeviceControlState.knownDevice
+    val connection = DeviceControlState.connection
+    val outputLevel = DeviceControlState.outputLevel
     private var previewJob: Job? = null
 
     init {
-        KnightControlState.knownDevice.value = store.load()
+        DeviceControlState.knownDevice.value = store.load()
     }
 
     fun setLevel(level: Int) {

@@ -30,7 +30,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.towersys.adaptiveremote.device.diagnostics.BleDeviceCandidate
 import com.towersys.adaptiveremote.device.diagnostics.BleDiagnosticStatus
 import com.towersys.adaptiveremote.device.diagnostics.BleDiagnosticViewModel
-import com.towersys.adaptiveremote.device.control.KnightConnectionStatus
+import com.towersys.adaptiveremote.device.control.DeviceConnectionStatus
 
 @Composable
 fun DeviceDiagnosticCard(viewModel: BleDiagnosticViewModel = viewModel()) {
@@ -86,7 +86,7 @@ fun DeviceDiagnosticCard(viewModel: BleDiagnosticViewModel = viewModel()) {
                                 }.toTypedArray(),
                             )
                         },
-                    ) { Text(if (connection is KnightConnectionStatus.Ready) "Rescan" else "Scan") }
+                    ) { Text(if (connection is DeviceConnectionStatus.Ready) "Rescan" else "Scan") }
                 }
             }
 
@@ -94,7 +94,7 @@ fun DeviceDiagnosticCard(viewModel: BleDiagnosticViewModel = viewModel()) {
             Text(
                 connection.setupSummary(),
                 style = MaterialTheme.typography.bodyMedium,
-                color = if (connection is KnightConnectionStatus.Error) MaterialTheme.colorScheme.error
+                color = if (connection is DeviceConnectionStatus.Error) MaterialTheme.colorScheme.error
                 else MaterialTheme.colorScheme.primary,
             )
             Text(
@@ -108,7 +108,7 @@ fun DeviceDiagnosticCard(viewModel: BleDiagnosticViewModel = viewModel()) {
                 is BleDiagnosticStatus.Complete -> ReportContent(
                     report = current.report,
                     commandAccepted = false,
-                    onRunProbe = if (connection is KnightConnectionStatus.Ready) {
+                    onRunProbe = if (connection is DeviceConnectionStatus.Ready) {
                         { viewModel.runLowOutputProbe(current.report) }
                     } else null,
                     onDisconnect = viewModel::disconnectAndReset,
@@ -192,11 +192,11 @@ private fun ReportContent(
     OutlinedButton(onClick = onDisconnect) { Text("Disconnect") }
 }
 
-private fun KnightConnectionStatus.setupSummary(): String = when (this) {
-    KnightConnectionStatus.Disconnected -> "Not connected • scan to begin"
-    is KnightConnectionStatus.Connecting -> "Connecting persistently to ${device.name}…"
-    is KnightConnectionStatus.Ready -> "${device.name} persistently connected"
-    is KnightConnectionStatus.Error -> message
+private fun DeviceConnectionStatus.setupSummary(): String = when (this) {
+    DeviceConnectionStatus.Disconnected -> "Not connected • scan to begin"
+    is DeviceConnectionStatus.Connecting -> "Connecting persistently to ${device.name}…"
+    is DeviceConnectionStatus.Ready -> "${device.name} persistently connected"
+    is DeviceConnectionStatus.Error -> message
 }
 
 private fun BleDiagnosticStatus.summary(): String = when (this) {

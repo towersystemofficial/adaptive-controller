@@ -5,11 +5,11 @@ import android.content.Intent
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.towersys.adaptiveremote.device.control.KnownKnight
-import com.towersys.adaptiveremote.device.control.KnownKnightStore
-import com.towersys.adaptiveremote.device.control.KnightControlState
+import com.towersys.adaptiveremote.device.control.KnownDevice
+import com.towersys.adaptiveremote.device.control.KnownDeviceStore
+import com.towersys.adaptiveremote.device.control.DeviceControlState
 import com.towersys.adaptiveremote.device.control.KnightControlService
-import com.towersys.adaptiveremote.device.control.KnightConnectionStatus
+import com.towersys.adaptiveremote.device.control.DeviceConnectionStatus
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,10 +21,10 @@ import kotlinx.coroutines.launch
 class BleDiagnosticViewModel(application: Application) : AndroidViewModel(application) {
     private val app = application.applicationContext
     private val diagnostic = KnightBleDiagnostic(application.applicationContext)
-    private val knownKnightStore = KnownKnightStore(application.applicationContext)
+    private val knownKnightStore = KnownDeviceStore(application.applicationContext)
     private val _status = MutableStateFlow<BleDiagnosticStatus>(BleDiagnosticStatus.Idle)
     val status: StateFlow<BleDiagnosticStatus> = _status.asStateFlow()
-    val connection = KnightControlState.connection
+    val connection = DeviceControlState.connection
     private var scanJob: Job? = null
 
     fun startScan() {
@@ -56,9 +56,9 @@ class BleDiagnosticViewModel(application: Application) : AndroidViewModel(applic
                 .onSuccess {
                     val report = it
                     if (report.hasExpectedJoyHubTransport) {
-                        val device = KnownKnight(report.deviceName, report.deviceAddress)
+                        val device = KnownDevice(report.deviceName, report.deviceAddress)
                         knownKnightStore.save(device)
-                        KnightControlState.knownDevice.value = device
+                        DeviceControlState.knownDevice.value = device
                         delay(INSPECTION_DISCONNECT_SETTLE_MS)
                         connectService(device)
                     }
@@ -73,7 +73,7 @@ class BleDiagnosticViewModel(application: Application) : AndroidViewModel(applic
     fun runLowOutputProbe(report: KnightDiagnosticReport) {
         _status.value = BleDiagnosticStatus.TestingCommand(report)
         viewModelScope.launch {
-            if (KnightControlState.connection.value !is KnightConnectionStatus.Ready) {
+            if (DeviceControlState.connection.value !is DeviceConnectionStatus.Ready) {
                 _status.value = BleDiagnosticStatus.Error("Wait for the persistent device connection, then retry.")
                 return@launch
             }
@@ -99,7 +99,7 @@ class BleDiagnosticViewModel(application: Application) : AndroidViewModel(applic
         _status.value = BleDiagnosticStatus.Idle
     }
 
-    private fun connectService(device: KnownKnight) {
+    private fun connectService(device: KnownDevice) {
         ContextCompat.startForegroundService(
             app,
             Intent(app, KnightControlService::class.java)
@@ -115,7 +115,7 @@ class BleDiagnosticViewModel(application: Application) : AndroidViewModel(applic
                 Intent(app, KnightControlService::class.java).setAction(KnightControlService.ACTION_DISCONNECT),
             )
         }
-        KnightControlState.connection.value = KnightConnectionStatus.Disconnected
+        DeviceControlState.connection.value = DeviceConnectionStatus.Disconnected
     }
 
     companion object {

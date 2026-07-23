@@ -41,7 +41,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.towersys.adaptiveremote.device.control.KnightConnectionStatus
+import com.towersys.adaptiveremote.device.control.DeviceConnectionStatus
 import com.towersys.adaptiveremote.device.control.PatternPlaybackState
 import com.towersys.adaptiveremote.patterns.BuiltInPatterns
 import com.towersys.adaptiveremote.patterns.KnightPattern
@@ -76,7 +76,7 @@ fun PatternScreen(viewModel: PatternViewModel = viewModel()) {
         item {
             PlaybackCard(
                 playback = playback,
-                connected = connection is KnightConnectionStatus.Ready,
+                connected = connection is DeviceConnectionStatus.Ready,
                 onStop = viewModel::stop,
             )
         }
@@ -125,7 +125,7 @@ fun PatternScreen(viewModel: PatternViewModel = viewModel()) {
                 pattern = pattern,
                 recentlyPlayed = pattern.id in history.take(3),
                 repeats = repeats,
-                connected = connection is KnightConnectionStatus.Ready,
+                connected = connection is DeviceConnectionStatus.Ready,
                 onRepeatsChange = { repeats = it },
                 onPlay = { viewModel.play(pattern, repeats) },
                 onEdit = { selected = pattern.copy(id = if (pattern.isBuiltIn) "custom-${System.currentTimeMillis()}" else pattern.id) },

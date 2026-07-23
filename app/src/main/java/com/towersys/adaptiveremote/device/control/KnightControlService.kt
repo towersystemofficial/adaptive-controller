@@ -70,7 +70,7 @@ class KnightControlService : Service() {
     private val bluetoothManager by lazy { getSystemService(BluetoothManager::class.java) }
     private var gatt: BluetoothGatt? = null
     private var writeCharacteristic: BluetoothGattCharacteristic? = null
-    private var currentDevice: KnownKnight? = null
+    private var currentDevice: KnownDevice? = null
     private val protocol = JoyHubProtocolAdapter
 
     override fun onCreate() {
@@ -91,7 +91,7 @@ class KnightControlService : Service() {
                 } else {
                     userRequestedDisconnect = false
                     startForeground(NOTIFICATION_ID, buildNotification("Connecting to $name…"))
-                    connect(KnownKnight(name, address))
+                    connect(KnownDevice(name, address))
                 }
             }
             ACTION_SET_LEVEL -> {
@@ -99,7 +99,7 @@ class KnightControlService : Service() {
                 patternGeneration++
                 patternJob?.cancel()
                 patternJob = null
-                KnightControlState.patternPlayback.value = PatternPlaybackState.Idle
+                DeviceControlState.patternPlayback.value = PatternPlaybackState.Idle
                 setLevel(intent.getIntExtra(EXTRA_LEVEL, 0))
             }
             ACTION_PLAY_PATTERN -> playPattern(intent)
@@ -122,7 +122,7 @@ class KnightControlService : Service() {
     }
 
     @SuppressLint("MissingPermission")
-    private fun connect(device: KnownKnight) {
+    private fun connect(device: KnownDevice) {
         if (!hasBluetoothPermissions()) {
             fail("Nearby-device permission is missing.")
             return
@@ -130,7 +130,7 @@ class KnightControlService : Service() {
         reconnectJob?.cancel()
         closeGattWithoutDisconnect()
         currentDevice = device
-        KnightControlState.connection.value = KnightConnectionStatus.Connecting(device)
+        DeviceControlState.connection.value = DeviceConnectionStatus.Connecting(device)
         val adapter = bluetoothManager?.adapter
         if (adapter == null || !adapter.isEnabled) {
             scheduleReconnect("Bluetooth is off; waiting to reconnect…")
@@ -156,14 +156,14 @@ class KnightControlService : Service() {
                     fail("Could not discover supported device controls.")
                 }
                 BluetoothProfile.STATE_DISCONNECTED -> {
-                    KnightControlState.outputLevel.value = 0
+                    DeviceControlState.outputLevel.value = 0
                     runCatching { connection.close() }
                     if (gatt === connection) {
                         gatt = null
                         writeCharacteristic = null
                     }
                     if (userRequestedDisconnect) {
-                        KnightControlState.connection.value = KnightConnectionStatus.Disconnected
+                        DeviceControlState.connection.value = DeviceConnectionStatus.Disconnected
                     } else {
                         scheduleReconnect("Device disconnected; reconnecting…")
                     }
@@ -184,7 +184,7 @@ class KnightControlService : Service() {
                 scheduleReconnect("Device control channel unavailable; reconnecting…")
                 return
             }
-            KnightControlState.connection.value = KnightConnectionStatus.Ready(device)
+            DeviceControlState.connection.value = DeviceConnectionStatus.Ready(device)
             updateNotification("Connected to ${device.name} • output 0%")
         }
     }
@@ -214,11 +214,11 @@ class KnightControlService : Service() {
             connection.writeCharacteristic(characteristic)
         }
         if (accepted) {
-            KnightControlState.outputLevel.value = level
+            DeviceControlState.outputLevel.value = level
             val percent = (level * 100f / 255f).toInt()
             updateNotification("Connected to ${currentDevice?.name ?: "device"} • output $percent%")
         } else {
-            KnightControlState.connection.value = KnightConnectionStatus.Error(
+            DeviceControlState.connection.value = DeviceConnectionStatus.Error(
                 "Android rejected the control command. Press Stop, then reconnect.",
             )
         }
@@ -229,14 +229,14 @@ class KnightControlService : Service() {
         val levels = intent.getIntArrayExtra(EXTRA_PATTERN_LEVELS) ?: return
         val durations = intent.getLongArrayExtra(EXTRA_PATTERN_DURATIONS) ?: return
         if (levels.isEmpty() || levels.size != durations.size ||
-            KnightControlState.connection.value !is KnightConnectionStatus.Ready
+            DeviceControlState.connection.value !is DeviceConnectionStatus.Ready
         ) return
         val name = intent.getStringExtra(EXTRA_PATTERN_NAME) ?: "Pattern"
         val repeats = intent.getIntExtra(EXTRA_PATTERN_REPEATS, 1).coerceIn(0, 100)
         val shouldBlend = intent.getBooleanExtra(EXTRA_BLEND_FROM_CURRENT, false)
         val smoothTransitions = intent.getBooleanExtra(EXTRA_SMOOTH_TRANSITIONS, false)
         val holdFinalLevel = intent.getBooleanExtra(EXTRA_HOLD_FINAL_LEVEL, false)
-        val startingLevel = KnightControlState.outputLevel.value
+        val startingLevel = DeviceControlState.outputLevel.value
         val generation = ++patternGeneration
         patternJob?.cancel()
         patternJob = serviceScope.launch {
@@ -246,7 +246,7 @@ class KnightControlService : Service() {
                 var cycle = 0
                 while (PatternRepeatPolicy.shouldStartCycle(repeats, cycle)) {
                     levels.indices.forEach { index ->
-                        KnightControlState.patternPlayback.value = PatternPlaybackState.Playing(
+                        DeviceControlState.patternPlayback.value = PatternPlaybackState.Playing(
                             name = name,
                             step = index + 1,
                             totalSteps = levels.size,
@@ -273,7 +273,7 @@ class KnightControlService : Service() {
                 if (completedNaturally && generation == patternGeneration) {
                     if (!holdFinalLevel) {
                         setLevel(0)
-                        KnightControlState.patternPlayback.value = PatternPlaybackState.Idle
+                        DeviceControlState.patternPlayback.value = PatternPlaybackState.Idle
                     } else {
                         textMonitorOverlay?.update(
                             titleText = "Caught up • scroll",
@@ -290,7 +290,7 @@ class KnightControlService : Service() {
         val levels = intent.getIntArrayExtra(EXTRA_PATTERN_LEVELS) ?: return
         val durations = intent.getLongArrayExtra(EXTRA_PATTERN_DURATIONS) ?: return
         if (levels.isEmpty() || levels.size != durations.size ||
-            KnightControlState.connection.value !is KnightConnectionStatus.Ready
+            DeviceControlState.connection.value !is DeviceConnectionStatus.Ready
         ) return
         val batch = AiBatch(
             name = intent.getStringExtra(EXTRA_PATTERN_NAME) ?: "AI batch",
@@ -331,7 +331,7 @@ class KnightControlService : Service() {
                         aiFallbackLoops++
                         if (aiFallbackLoops > MAX_AI_FALLBACK_LOOPS) {
                             setLevel(0)
-                            KnightControlState.patternPlayback.value = PatternPlaybackState.Idle
+                            DeviceControlState.patternPlayback.value = PatternPlaybackState.Idle
                             textMonitorOverlay?.update("AI generation delayed", "Stopped after three fallback loops", 0f)
                             break
                         }
@@ -353,9 +353,9 @@ class KnightControlService : Service() {
     }
 
     private suspend fun playAiBatch(batch: AiBatch) {
-        blendTo(KnightControlState.outputLevel.value, batch.levels.first())
+        blendTo(DeviceControlState.outputLevel.value, batch.levels.first())
         batch.levels.indices.forEach { index ->
-            KnightControlState.patternPlayback.value = PatternPlaybackState.Playing(
+            DeviceControlState.patternPlayback.value = PatternPlaybackState.Playing(
                 batch.name,
                 index + 1,
                 batch.levels.size,
@@ -389,7 +389,7 @@ class KnightControlService : Service() {
     }
 
     private suspend fun blendStepTo(to: Int, durationMs: Long) {
-        val from = KnightControlState.outputLevel.value
+        val from = DeviceControlState.outputLevel.value
         val blendDuration = minOf(AI_STEP_BLEND_DURATION_MS, durationMs / 2)
         if (from == to || blendDuration < AI_STEP_BLEND_INTERVAL_MS) {
             setLevel(to)
@@ -406,7 +406,7 @@ class KnightControlService : Service() {
     }
 
     private fun startTextMonitor() {
-        if (KnightControlState.connection.value !is KnightConnectionStatus.Ready) {
+        if (DeviceControlState.connection.value !is DeviceConnectionStatus.Ready) {
             TextMonitorState.status.value = TextMonitorStatus.Error("A compatible device is not connected.")
             return
         }
@@ -516,7 +516,7 @@ class KnightControlService : Service() {
     }
 
     private fun startProcedural() {
-        if (KnightControlState.connection.value !is KnightConnectionStatus.Ready) {
+        if (DeviceControlState.connection.value !is DeviceConnectionStatus.Ready) {
             ProceduralMonitorState.status.value = ProceduralMonitorStatus.Error("A compatible device is not connected.")
             return
         }
@@ -841,7 +841,7 @@ class KnightControlService : Service() {
         patternGeneration++
         patternJob?.cancel()
         patternJob = null
-        KnightControlState.patternPlayback.value = PatternPlaybackState.Idle
+        DeviceControlState.patternPlayback.value = PatternPlaybackState.Idle
         setLevel(0)
     }
 
@@ -851,8 +851,8 @@ class KnightControlService : Service() {
         stopTextMonitor()
         runCatching { stopOutput() }
         closeGatt()
-        KnightControlState.outputLevel.value = 0
-        KnightControlState.connection.value = KnightConnectionStatus.Disconnected
+        DeviceControlState.outputLevel.value = 0
+        DeviceControlState.connection.value = DeviceConnectionStatus.Disconnected
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
     }
@@ -875,8 +875,8 @@ class KnightControlService : Service() {
     private fun scheduleReconnect(message: String) {
         if (userRequestedDisconnect) return
         val device = currentDevice ?: return
-        KnightControlState.outputLevel.value = 0
-        KnightControlState.connection.value = KnightConnectionStatus.Connecting(device)
+        DeviceControlState.outputLevel.value = 0
+        DeviceControlState.connection.value = DeviceConnectionStatus.Connecting(device)
         updateNotification(message)
         reconnectJob?.cancel()
         reconnectJob = serviceScope.launch {
@@ -887,8 +887,8 @@ class KnightControlService : Service() {
     }
 
     private fun fail(message: String) {
-        KnightControlState.outputLevel.value = 0
-        KnightControlState.connection.value = KnightConnectionStatus.Error(message)
+        DeviceControlState.outputLevel.value = 0
+        DeviceControlState.connection.value = DeviceConnectionStatus.Error(message)
         updateNotification("Adaptive Remote needs attention")
     }
 
@@ -900,8 +900,8 @@ class KnightControlService : Service() {
         if (writeCharacteristic != null) runCatching { stopOutput() }
         serviceScope.cancel()
         closeGatt()
-        KnightControlState.outputLevel.value = 0
-        KnightControlState.connection.value = KnightConnectionStatus.Disconnected
+        DeviceControlState.outputLevel.value = 0
+        DeviceControlState.connection.value = DeviceConnectionStatus.Disconnected
         super.onDestroy()
     }
 

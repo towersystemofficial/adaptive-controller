@@ -27,7 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.towersys.adaptiveremote.device.control.KnightConnectionStatus
+import com.towersys.adaptiveremote.device.control.DeviceConnectionStatus
 import com.towersys.adaptiveremote.device.control.ManualControlViewModel
 import kotlin.math.roundToInt
 
@@ -36,7 +36,7 @@ fun ManualControlCard(viewModel: ManualControlViewModel = viewModel()) {
     val knownDevice by viewModel.knownDevice.collectAsStateWithLifecycle()
     val connection by viewModel.connection.collectAsStateWithLifecycle()
     val outputLevel by viewModel.outputLevel.collectAsStateWithLifecycle()
-    val isReady = connection is KnightConnectionStatus.Ready
+    val isReady = connection is DeviceConnectionStatus.Ready
     var selectedLevel by remember { mutableFloatStateOf(0f) }
 
     LaunchedEffect(outputLevel) {
@@ -61,7 +61,7 @@ fun ManualControlCard(viewModel: ManualControlViewModel = viewModel()) {
                     Text(
                         connection.summary(knownDevice?.name),
                         style = MaterialTheme.typography.bodyMedium,
-                        color = if (connection is KnightConnectionStatus.Error) {
+                        color = if (connection is DeviceConnectionStatus.Error) {
                             MaterialTheme.colorScheme.error
                         } else {
                             MaterialTheme.colorScheme.onSurfaceVariant
@@ -136,9 +136,9 @@ fun ManualControlCard(viewModel: ManualControlViewModel = viewModel()) {
     }
 }
 
-private fun KnightConnectionStatus.summary(knownName: String?): String = when (this) {
-    KnightConnectionStatus.Disconnected -> if (knownName == null) "No saved device" else "$knownName disconnected"
-    is KnightConnectionStatus.Connecting -> "Connecting to ${device.name}…"
-    is KnightConnectionStatus.Ready -> "${device.name} connected"
-    is KnightConnectionStatus.Error -> message
+private fun DeviceConnectionStatus.summary(knownName: String?): String = when (this) {
+    DeviceConnectionStatus.Disconnected -> if (knownName == null) "No saved device" else "$knownName disconnected"
+    is DeviceConnectionStatus.Connecting -> "Connecting to ${device.name}…"
+    is DeviceConnectionStatus.Ready -> "${device.name} connected"
+    is DeviceConnectionStatus.Error -> message
 }

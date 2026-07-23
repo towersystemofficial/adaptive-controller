@@ -31,7 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.towersys.adaptiveremote.core.AiIntensitySettings
-import com.towersys.adaptiveremote.device.control.KnightConnectionStatus
+import com.towersys.adaptiveremote.device.control.DeviceConnectionStatus
 import com.towersys.adaptiveremote.device.control.VideoMonitorStatus
 import com.towersys.adaptiveremote.video.VideoModeViewModel
 
@@ -77,7 +77,7 @@ fun VideoModeScreen(viewModel: VideoModeViewModel = viewModel()) {
                     Text(
                         when {
                             !hasApiKey -> "Save your xAI key in Text mode first."
-                            connection !is KnightConnectionStatus.Ready -> "Connect a compatible device first."
+                            connection !is DeviceConnectionStatus.Ready -> "Connect a compatible device first."
                             else -> "The device and Grok are ready."
                         },
                         style = MaterialTheme.typography.bodySmall,
@@ -101,7 +101,7 @@ fun VideoModeScreen(viewModel: VideoModeViewModel = viewModel()) {
             if (status == VideoMonitorStatus.Idle || status is VideoMonitorStatus.Error) {
                 Button(
                     modifier = Modifier.fillMaxWidth(),
-                    enabled = hasApiKey && connection is KnightConnectionStatus.Ready,
+                    enabled = hasApiKey && connection is DeviceConnectionStatus.Ready,
                     onClick = {
                         if (!Settings.canDrawOverlays(context)) {
                             context.startActivity(

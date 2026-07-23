@@ -4,7 +4,7 @@ import android.app.Application
 import android.content.Intent
 import androidx.lifecycle.AndroidViewModel
 import com.towersys.adaptiveremote.device.control.KnightControlService
-import com.towersys.adaptiveremote.device.control.KnightControlState
+import com.towersys.adaptiveremote.device.control.DeviceControlState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
@@ -15,8 +15,8 @@ class PatternViewModel(application: Application) : AndroidViewModel(application)
     val saved = _saved.asStateFlow()
     private val _history = MutableStateFlow(store.loadHistory())
     val history = _history.asStateFlow()
-    val connection = KnightControlState.connection
-    val playback = KnightControlState.patternPlayback
+    val connection = DeviceControlState.connection
+    val playback = DeviceControlState.patternPlayback
 
     fun save(pattern: KnightPattern) {
         val normalized = pattern.copy(

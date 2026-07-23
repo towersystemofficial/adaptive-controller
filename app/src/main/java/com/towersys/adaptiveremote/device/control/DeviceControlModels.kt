@@ -1,18 +1,18 @@
 package com.towersys.adaptiveremote.device.control
 
-data class KnownKnight(val name: String, val address: String)
+data class KnownDevice(val name: String, val address: String)
 
-sealed interface KnightConnectionStatus {
-    data object Disconnected : KnightConnectionStatus
-    data class Connecting(val device: KnownKnight) : KnightConnectionStatus
-    data class Ready(val device: KnownKnight) : KnightConnectionStatus
-    data class Error(val message: String) : KnightConnectionStatus
+sealed interface DeviceConnectionStatus {
+    data object Disconnected : DeviceConnectionStatus
+    data class Connecting(val device: KnownDevice) : DeviceConnectionStatus
+    data class Ready(val device: KnownDevice) : DeviceConnectionStatus
+    data class Error(val message: String) : DeviceConnectionStatus
 }
 
-object KnightControlState {
-    val knownDevice = kotlinx.coroutines.flow.MutableStateFlow<KnownKnight?>(null)
-    val connection = kotlinx.coroutines.flow.MutableStateFlow<KnightConnectionStatus>(
-        KnightConnectionStatus.Disconnected,
+object DeviceControlState {
+    val knownDevice = kotlinx.coroutines.flow.MutableStateFlow<KnownDevice?>(null)
+    val connection = kotlinx.coroutines.flow.MutableStateFlow<DeviceConnectionStatus>(
+        DeviceConnectionStatus.Disconnected,
     )
     val outputLevel = kotlinx.coroutines.flow.MutableStateFlow(0)
     val patternPlayback = kotlinx.coroutines.flow.MutableStateFlow<PatternPlaybackState>(
