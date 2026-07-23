@@ -99,12 +99,18 @@ class KnightControlService : Service() {
                 }
             }
             ACTION_SET_LEVEL -> {
+                val capability = intent.getStringExtra(EXTRA_CAPABILITY)
+                    ?.let { runCatching { DeviceCapability.valueOf(it) }.getOrNull() }
+                val protocol = currentProtocol
+                if (capability == null || protocol == null || capability !in protocol.capabilities) {
+                    return START_STICKY
+                }
                 clearAiQueue()
                 patternGeneration++
                 patternJob?.cancel()
                 patternJob = null
                 DeviceControlState.patternPlayback.value = PatternPlaybackState.Idle
-                setLevel(intent.getIntExtra(EXTRA_LEVEL, 0))
+                setLevel(intent.getIntExtra(EXTRA_LEVEL, 0), capability)
             }
             ACTION_PLAY_PATTERN -> playPattern(intent)
             ACTION_QUEUE_AI_BATCH -> queueAiBatch(intent)
@@ -203,7 +209,10 @@ class KnightControlService : Service() {
     }
 
     @SuppressLint("MissingPermission")
-    private fun setLevel(requestedLevel: Int) {
+    private fun setLevel(
+        requestedLevel: Int,
+        capability: DeviceCapability = DeviceCapability.OSCILLATION,
+    ) {
         val level = requestedLevel.coerceIn(0, 255)
         val connection = gatt ?: return
         val characteristic = writeCharacteristic ?: return
@@ -211,7 +220,7 @@ class KnightControlService : Service() {
         val command = if (level == 0) {
             protocol.encodeStop()
         } else {
-            protocol.encodeScalar(DeviceCapability.OSCILLATION, level)
+            protocol.encodeScalar(capability, level)
         }
         val accepted = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             connection.writeCharacteristic(
@@ -989,6 +998,7 @@ class KnightControlService : Service() {
         const val EXTRA_NAME = "name"
         const val EXTRA_ADDRESS = "address"
         const val EXTRA_PROTOCOL_ID = "protocol_id"
+        const val EXTRA_CAPABILITY = "capability"
         const val EXTRA_LEVEL = "level"
         const val EXTRA_PATTERN_NAME = "pattern_name"
         const val EXTRA_PATTERN_LEVELS = "pattern_levels"

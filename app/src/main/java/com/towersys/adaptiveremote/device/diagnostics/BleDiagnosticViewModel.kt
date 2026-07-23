@@ -10,6 +10,7 @@ import com.towersys.adaptiveremote.device.control.KnownDeviceStore
 import com.towersys.adaptiveremote.device.control.DeviceControlState
 import com.towersys.adaptiveremote.device.control.KnightControlService
 import com.towersys.adaptiveremote.device.control.DeviceConnectionStatus
+import com.towersys.adaptiveremote.device.protocol.DeviceCapability
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -81,6 +82,7 @@ class BleDiagnosticViewModel(application: Application) : AndroidViewModel(applic
             app.startService(
                 Intent(app, KnightControlService::class.java)
                     .setAction(KnightControlService.ACTION_SET_LEVEL)
+                    .putExtra(KnightControlService.EXTRA_CAPABILITY, DeviceCapability.OSCILLATION.name)
                     .putExtra(KnightControlService.EXTRA_LEVEL, BleDeviceDiagnostic.PROBE_VALUE),
             )
             delay(BleDeviceDiagnostic.PROBE_DURATION_MS)
