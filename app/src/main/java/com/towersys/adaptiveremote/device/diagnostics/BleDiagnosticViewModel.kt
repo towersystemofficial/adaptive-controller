@@ -10,9 +10,6 @@ import com.towersys.adaptiveremote.device.control.KnownDeviceStore
 import com.towersys.adaptiveremote.device.control.DeviceControlState
 import com.towersys.adaptiveremote.device.control.KnightControlService
 import com.towersys.adaptiveremote.device.control.DeviceConnectionStatus
-import com.towersys.adaptiveremote.device.protocol.DeviceProtocolRegistry
-import com.towersys.adaptiveremote.device.protocol.DiscoveredBleService
-import java.util.UUID
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,8 +20,8 @@ import kotlinx.coroutines.launch
 
 class BleDiagnosticViewModel(application: Application) : AndroidViewModel(application) {
     private val app = application.applicationContext
-    private val diagnostic = KnightBleDiagnostic(application.applicationContext)
-    private val knownKnightStore = KnownDeviceStore(application.applicationContext)
+    private val diagnostic = BleDeviceDiagnostic(application.applicationContext)
+    private val knownDeviceStore = KnownDeviceStore(application.applicationContext)
     private val _status = MutableStateFlow<BleDiagnosticStatus>(BleDiagnosticStatus.Idle)
     val status: StateFlow<BleDiagnosticStatus> = _status.asStateFlow()
     val connection = DeviceControlState.connection
@@ -58,10 +55,10 @@ class BleDiagnosticViewModel(application: Application) : AndroidViewModel(applic
             diagnostic.inspect(candidate)
                 .onSuccess {
                     val report = it
-                    val adapter = DeviceProtocolRegistry.match(report.discoveredServices())
+                    val adapter = report.matchedAdapter
                     if (adapter != null) {
                         val device = KnownDevice(report.deviceName, report.deviceAddress, adapter.id)
-                        knownKnightStore.save(device)
+                        knownDeviceStore.save(device)
                         DeviceControlState.knownDevice.value = device
                         delay(INSPECTION_DISCONNECT_SETTLE_MS)
                         connectService(device)
@@ -74,7 +71,7 @@ class BleDiagnosticViewModel(application: Application) : AndroidViewModel(applic
         }
     }
 
-    fun runLowOutputProbe(report: KnightDiagnosticReport) {
+    fun runLowOutputProbe(report: DeviceDiagnosticReport) {
         _status.value = BleDiagnosticStatus.TestingCommand(report)
         viewModelScope.launch {
             if (DeviceControlState.connection.value !is DeviceConnectionStatus.Ready) {
@@ -84,9 +81,9 @@ class BleDiagnosticViewModel(application: Application) : AndroidViewModel(applic
             app.startService(
                 Intent(app, KnightControlService::class.java)
                     .setAction(KnightControlService.ACTION_SET_LEVEL)
-                    .putExtra(KnightControlService.EXTRA_LEVEL, KnightBleDiagnostic.PROBE_VALUE),
+                    .putExtra(KnightControlService.EXTRA_LEVEL, BleDeviceDiagnostic.PROBE_VALUE),
             )
-            delay(KnightBleDiagnostic.PROBE_DURATION_MS)
+            delay(BleDeviceDiagnostic.PROBE_DURATION_MS)
             app.startService(Intent(app, KnightControlService::class.java).setAction(KnightControlService.ACTION_STOP))
             _status.value = BleDiagnosticStatus.CommandAccepted(report)
         }
@@ -121,21 +118,6 @@ class BleDiagnosticViewModel(application: Application) : AndroidViewModel(applic
         }
         DeviceControlState.connection.value = DeviceConnectionStatus.Disconnected
     }
-
-    private fun KnightDiagnosticReport.discoveredServices(): List<DiscoveredBleService> =
-        services.mapNotNull { service ->
-            runCatching {
-                DiscoveredBleService(
-                    uuid = UUID.fromString(service.uuid),
-                    writableCharacteristicUuids = service.characteristics
-                        .filter { characteristic ->
-                            characteristic.properties.any { it == "WRITE" || it == "WRITE_NO_RESPONSE" }
-                        }
-                        .map { UUID.fromString(it.uuid) }
-                        .toSet(),
-                )
-            }.getOrNull()
-        }
 
     companion object {
         private const val SCAN_DISCONNECT_SETTLE_MS = 500L
