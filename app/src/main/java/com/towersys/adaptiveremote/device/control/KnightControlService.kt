@@ -29,8 +29,9 @@ import kotlinx.coroutines.withContext
 import com.towersys.adaptiveremote.MainActivity
 import com.towersys.adaptiveremote.R
 import com.towersys.adaptiveremote.core.AiIntensitySettings
+import com.towersys.adaptiveremote.device.protocol.BleProtocolAdapter
 import com.towersys.adaptiveremote.device.protocol.DeviceCapability
-import com.towersys.adaptiveremote.device.protocol.JoyHubProtocolAdapter
+import com.towersys.adaptiveremote.device.protocol.DeviceProtocolRegistry
 import com.towersys.adaptiveremote.patterns.PatternRepeatPolicy
 import com.towersys.adaptiveremote.patterns.PatternStep
 import com.towersys.adaptiveremote.procedural.GrokProceduralClient
@@ -71,7 +72,7 @@ class KnightControlService : Service() {
     private var gatt: BluetoothGatt? = null
     private var writeCharacteristic: BluetoothGattCharacteristic? = null
     private var currentDevice: KnownDevice? = null
-    private val protocol = JoyHubProtocolAdapter
+    private var currentProtocol: BleProtocolAdapter? = null
 
     override fun onCreate() {
         super.onCreate()
@@ -84,14 +85,17 @@ class KnightControlService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
             ACTION_CONNECT -> {
-                val name = intent.getStringExtra(EXTRA_NAME) ?: "J-Mars"
+                val name = intent.getStringExtra(EXTRA_NAME) ?: "Device"
                 val address = intent.getStringExtra(EXTRA_ADDRESS)
-                if (address == null) {
-                    fail("Missing device Bluetooth address.")
-                } else {
-                    userRequestedDisconnect = false
-                    startForeground(NOTIFICATION_ID, buildNotification("Connecting to $name…"))
-                    connect(KnownDevice(name, address, protocol.id))
+                val protocolId = intent.getStringExtra(EXTRA_PROTOCOL_ID)
+                when {
+                    address == null -> rejectConnection("Missing device Bluetooth address.")
+                    protocolId == null -> rejectConnection("Missing device protocol identifier.")
+                    else -> {
+                        userRequestedDisconnect = false
+                        startForeground(NOTIFICATION_ID, buildNotification("Connecting to $name…"))
+                        connect(KnownDevice(name, address, protocolId))
+                    }
                 }
             }
             ACTION_SET_LEVEL -> {
@@ -127,9 +131,15 @@ class KnightControlService : Service() {
             fail("Nearby-device permission is missing.")
             return
         }
+        val protocol = DeviceProtocolRegistry.findById(device.protocolId)
+        if (protocol == null) {
+            rejectConnection("The saved device protocol is not supported by this build.")
+            return
+        }
         reconnectJob?.cancel()
         closeGattWithoutDisconnect()
         currentDevice = device
+        currentProtocol = protocol
         DeviceControlState.connection.value = DeviceConnectionStatus.Connecting(device)
         val adapter = bluetoothManager?.adapter
         if (adapter == null || !adapter.isEnabled) {
@@ -176,9 +186,12 @@ class KnightControlService : Service() {
                 scheduleReconnect("Device control discovery failed; reconnecting…")
                 return
             }
-            writeCharacteristic = connection
+            val protocol = currentProtocol
+            writeCharacteristic = protocol?.let {
+                connection
                 .getService(protocol.serviceUuid)
                 ?.getCharacteristic(protocol.writeCharacteristicUuid)
+            }
             val device = currentDevice
             if (writeCharacteristic == null || device == null) {
                 scheduleReconnect("Device control channel unavailable; reconnecting…")
@@ -194,6 +207,7 @@ class KnightControlService : Service() {
         val level = requestedLevel.coerceIn(0, 255)
         val connection = gatt ?: return
         val characteristic = writeCharacteristic ?: return
+        val protocol = currentProtocol ?: return
         val command = if (level == 0) {
             protocol.encodeStop()
         } else {
@@ -863,6 +877,7 @@ class KnightControlService : Service() {
         runCatching { gatt?.close() }
         gatt = null
         writeCharacteristic = null
+        currentProtocol = null
     }
 
     @SuppressLint("MissingPermission")
@@ -890,6 +905,14 @@ class KnightControlService : Service() {
         DeviceControlState.outputLevel.value = 0
         DeviceControlState.connection.value = DeviceConnectionStatus.Error(message)
         updateNotification("Adaptive Remote needs attention")
+    }
+
+    private fun rejectConnection(message: String) {
+        reconnectJob?.cancel()
+        runCatching { stopOutput() }
+        closeGatt()
+        currentDevice = null
+        fail(message)
     }
 
     override fun onDestroy() {
@@ -965,6 +988,7 @@ class KnightControlService : Service() {
         const val ACTION_DISCONNECT = "com.towersys.adaptiveremote.action.DISCONNECT"
         const val EXTRA_NAME = "name"
         const val EXTRA_ADDRESS = "address"
+        const val EXTRA_PROTOCOL_ID = "protocol_id"
         const val EXTRA_LEVEL = "level"
         const val EXTRA_PATTERN_NAME = "pattern_name"
         const val EXTRA_PATTERN_LEVELS = "pattern_levels"

@@ -106,7 +106,8 @@ class BleDiagnosticViewModel(application: Application) : AndroidViewModel(applic
             Intent(app, KnightControlService::class.java)
                 .setAction(KnightControlService.ACTION_CONNECT)
                 .putExtra(KnightControlService.EXTRA_NAME, device.name)
-                .putExtra(KnightControlService.EXTRA_ADDRESS, device.address),
+                .putExtra(KnightControlService.EXTRA_ADDRESS, device.address)
+                .putExtra(KnightControlService.EXTRA_PROTOCOL_ID, device.protocolId),
         )
     }
 
