@@ -2,6 +2,11 @@ package com.towersys.adaptiveremote.device.protocol
 
 import java.util.UUID
 
+enum class AdapterSupportStatus {
+    VERIFIED,
+    EXPERIMENTAL,
+}
+
 enum class DeviceCapability {
     VIBRATION,
     ROTATION,
@@ -15,6 +20,7 @@ enum class DeviceCapability {
 interface BleProtocolAdapter {
     val id: String
     val displayName: String
+    val supportStatus: AdapterSupportStatus
     val serviceUuid: UUID
     val writeCharacteristicUuid: UUID
     val capabilities: Set<DeviceCapability>
