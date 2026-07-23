@@ -1,6 +1,10 @@
 package com.towersys.adaptiveremote.device.control
 
-data class KnownDevice(val name: String, val address: String)
+data class KnownDevice(
+    val name: String,
+    val address: String,
+    val protocolId: String,
+)
 
 sealed interface DeviceConnectionStatus {
     data object Disconnected : DeviceConnectionStatus
