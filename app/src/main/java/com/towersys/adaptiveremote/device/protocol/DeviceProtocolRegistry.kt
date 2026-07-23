@@ -8,7 +8,10 @@ data class DiscoveredBleService(
 )
 
 object DeviceProtocolRegistry {
-    private val adapters: List<BleProtocolAdapter> = listOf(JoyHubProtocolAdapter)
+    private val adapters: List<BleProtocolAdapter> = listOf(
+        JoyHubProtocolAdapter,
+        Lovense5030ProtocolAdapter,
+    )
 
     fun findById(id: String): BleProtocolAdapter? = adapters.firstOrNull { it.id == id }
 
